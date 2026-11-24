@@ -1,0 +1,596 @@
+{
+  "entities": {
+    "School": {
+      "title": "School",
+      "description": "Đơn vị trường học độc lập (Multi-tenant space) gồm thông tin trường, cấu hình và trạng thái",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "code": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 256 },
+        "governingBody": { "type": "string", "maxLength": 256 },
+        "educationLevels": { "type": "string", "maxLength": 128 },
+        "academicYear": { "type": "string", "maxLength": 64 },
+        "configJson": { "type": "string", "maxLength": 4000 },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "ARCHIVED"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "code", "name", "governingBody", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "SchoolUser": {
+      "title": "SchoolUser",
+      "description": "Hồ sơ giáo viên thuộc trường (ID ổn định, không dùng email/họ tên làm khóa chính, không lưu mật khẩu)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 256 },
+        "departmentId": { "type": "string", "maxLength": 128 },
+        "departmentName": { "type": "string", "maxLength": 256 },
+        "roles": { "type": "string", "maxLength": 256 },
+        "assignedSubjects": { "type": "string", "maxLength": 512 },
+        "status": { "type": "string", "enum": ["ACTIVE", "DISABLED", "LOCKED", "UNACTIVATED"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "fullName", "roles", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Thông tin định danh cá nhân (PII) tách biệt của tài khoản",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "lastLoginAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "schoolId", "email", "updatedAt"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Tổ chuyên môn thuộc trường (Không lưu mảng giáo viên lớn; liên kết qua departmentId)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 256 },
+        "educationLevelsCsv": { "type": "string", "maxLength": 128 },
+        "headUserId": { "type": "string", "maxLength": 128 },
+        "headFullName": { "type": "string", "maxLength": 256 },
+        "deputyUserId": { "type": "string", "maxLength": 128 },
+        "memberCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "code", "name", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "TeachingAssignment": {
+      "title": "TeachingAssignment",
+      "description": "Phân công giảng dạy của giáo viên theo năm học, cấp học, môn học và khối lớp",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "teacherName": { "type": "string", "maxLength": 256 },
+        "departmentId": { "type": "string", "maxLength": 128 },
+        "departmentName": { "type": "string", "maxLength": 256 },
+        "academicYear": { "type": "string", "maxLength": 64 },
+        "academicYearId": { "type": "string", "maxLength": 128 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "subject": { "type": "string", "maxLength": 128 },
+        "grade": { "type": "number" },
+        "subjectsCsv": { "type": "string", "maxLength": 256 },
+        "gradesCsv": { "type": "string", "maxLength": 128 },
+        "classNamesCsv": { "type": "string", "maxLength": 256 },
+        "professionalRole": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "userId", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "PermissionGrant": {
+      "title": "PermissionGrant",
+      "description": "Bản ghi phân quyền của người dùng theo cấp học, môn học, khối lớp và quyền chức năng (Thiết kế dễ kiểm tra bằng Security Rules)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "roleCode": { "type": "string", "maxLength": 64 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "subject": { "type": "string", "maxLength": 128 },
+        "grade": { "type": "number" },
+        "permissionCodesCsv": { "type": "string", "maxLength": 1500 },
+        "canApproveExam": { "type": "boolean" },
+        "canAccessSecretExam": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "REVOKED", "EXPIRED"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "userId", "levelId", "subject", "grade", "permissionCodesCsv", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "CurriculumItem": {
+      "title": "CurriculumItem",
+      "description": "Chương trình giáo dục, chủ đề, yêu cầu cần đạt và nguồn tài liệu",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "grade": { "type": "number" },
+        "subject": { "type": "string", "maxLength": 128 },
+        "chapterCode": { "type": "string", "maxLength": 64 },
+        "chapterTitle": { "type": "string", "maxLength": 512 },
+        "topicTitle": { "type": "string", "maxLength": 512 },
+        "learningOutcomesSummary": { "type": "string", "maxLength": 4000 },
+        "sourceReference": { "type": "string", "maxLength": 512 },
+        "status": { "type": "string", "enum": ["ACTIVE", "ARCHIVED"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "levelId", "grade", "subject", "topicTitle", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Câu hỏi độc lập trong ngân hàng câu hỏi của trường (Không nhúng tệp nhị phân lớn)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "grade": { "type": "number" },
+        "subject": { "type": "string", "maxLength": 128 },
+        "curriculumId": { "type": "string", "maxLength": 128 },
+        "format": { "type": "string", "maxLength": 64 },
+        "cognitiveLevel": { "type": "string", "maxLength": 64 },
+        "stem": { "type": "string", "maxLength": 5000 },
+        "optionsJson": { "type": "string", "maxLength": 4000 },
+        "correctAnswer": { "type": "string", "maxLength": 2000 },
+        "points": { "type": "number" },
+        "mediaStoragePath": { "type": "string", "maxLength": 512 },
+        "securityClassification": {
+          "type": "string",
+          "enum": ["DRAFT_QUESTION", "APPROVED_QUESTION", "SECRET_EXAM"]
+        },
+        "status": { "type": "string", "maxLength": 64 },
+        "version": { "type": "number" },
+        "isSoftDeleted": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "code", "subject", "grade", "stem", "securityClassification", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "QuestionVersion": {
+      "title": "QuestionVersion",
+      "description": "Phiên bản lịch sử bất biến của câu hỏi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "questionId": { "type": "string", "maxLength": 128 },
+        "versionNumber": { "type": "number" },
+        "stemSnapshot": { "type": "string", "maxLength": 5000 },
+        "correctAnswerSnapshot": { "type": "string", "maxLength": 2000 },
+        "pointsSnapshot": { "type": "number" },
+        "changeNote": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "questionId", "versionNumber", "stemSnapshot", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "Matrix": {
+      "title": "Matrix",
+      "description": "Ma trận đề kiểm tra định kỳ, cấu trúc nhận thức, tổng điểm và phiên bản",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 512 },
+        "academicYear": { "type": "string", "maxLength": 64 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "grade": { "type": "number" },
+        "subject": { "type": "string", "maxLength": 128 },
+        "structureJson": { "type": "string", "maxLength": 15000 },
+        "totalPoints": { "type": "number" },
+        "version": { "type": "number" },
+        "isSoftDeleted": { "type": "boolean" },
+        "status": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "code", "title", "subject", "grade", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "Specification": {
+      "title": "Specification",
+      "description": "Bản đặc tả đề kiểm tra liên kết trực tiếp với ma trận",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "matrixId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 512 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "grade": { "type": "number" },
+        "subject": { "type": "string", "maxLength": 128 },
+        "specCellsJson": { "type": "string", "maxLength": 15000 },
+        "version": { "type": "number" },
+        "status": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "matrixId", "title", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "description": "Đề kiểm tra định kỳ, danh sách tham chiếu câu hỏi, mã đề, phiên bản và trạng thái phê duyệt",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 512 },
+        "academicYear": { "type": "string", "maxLength": 64 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "grade": { "type": "number" },
+        "subject": { "type": "string", "maxLength": 128 },
+        "departmentId": { "type": "string", "maxLength": 128 },
+        "departmentName": { "type": "string", "maxLength": 256 },
+        "matrixId": { "type": "string", "maxLength": 128 },
+        "specificationId": { "type": "string", "maxLength": 128 },
+        "questionIdsCsv": { "type": "string", "maxLength": 4000 },
+        "variantCodesCsv": { "type": "string", "maxLength": 512 },
+        "totalPoints": { "type": "number" },
+        "exportedFileStoragePath": { "type": "string", "maxLength": 512 },
+        "securityClassification": {
+          "type": "string",
+          "enum": ["EXAM_IN_PREPARATION", "SECRET_EXAM", "PUBLISHED_EXAM", "ARCHIVED_RECORD"]
+        },
+        "version": { "type": "number" },
+        "isSoftDeleted": { "type": "boolean" },
+        "status": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "code", "title", "subject", "grade", "securityClassification", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ExamVersion": {
+      "title": "ExamVersion",
+      "description": "Phiên bản lịch sử bất biến của đề kiểm tra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 128 },
+        "versionNumber": { "type": "number" },
+        "questionIdsCsvSnapshot": { "type": "string", "maxLength": 4000 },
+        "variantCodesCsvSnapshot": { "type": "string", "maxLength": 512 },
+        "changeSummary": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "examId", "versionNumber", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "AiReview": {
+      "title": "AiReview",
+      "description": "Báo cáo kiểm định chất lượng đề kiểm tra bằng AI (lỗi phát hiện, đề xuất chỉnh sửa, phiên bản được kiểm tra)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 128 },
+        "testedVersion": { "type": "number" },
+        "qualityScore": { "type": "number" },
+        "issuesJson": { "type": "string", "maxLength": 8000 },
+        "recommendationsJson": { "type": "string", "maxLength": 8000 },
+        "status": { "type": "string", "enum": ["PASSED", "NEEDS_REVISION", "CRITICAL_ERRORS"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "examId", "testedVersion", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "Approval": {
+      "title": "Approval",
+      "description": "Hồ sơ thẩm định và phê duyệt chính thức (chỉ Lãnh đạo được cấp quyền mới được ghi kết luận phê duyệt)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "targetType": { "type": "string", "enum": ["MATRIX", "EXAM", "WORKFLOW_DOSSIER"] },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "reviewerUserId": { "type": "string", "maxLength": 128 },
+        "approverUserId": { "type": "string", "maxLength": 128 },
+        "approverRole": { "type": "string", "maxLength": 64 },
+        "decision": { "type": "string", "enum": ["APPROVED", "REVISION_REQUIRED", "PUBLISHED", "REJECTED"] },
+        "comment": { "type": "string", "maxLength": 2000 },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "maxLength": 64 },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "targetType", "targetId", "approverUserId", "decision", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ExamWorkflow": {
+      "title": "ExamWorkflow",
+      "description": "Hồ sơ quy trình 9 bước biên soạn - thẩm định - phê duyệt đề kiểm tra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 512 },
+        "academicYear": { "type": "string", "maxLength": 64 },
+        "levelId": { "type": "string", "enum": ["PRIMARY", "LOWER_SECONDARY"] },
+        "grade": { "type": "number" },
+        "subject": { "type": "string", "maxLength": 128 },
+        "departmentId": { "type": "string", "maxLength": 128 },
+        "departmentName": { "type": "string", "maxLength": 256 },
+        "currentStep": { "type": "number" },
+        "assigneeUserId": { "type": "string", "maxLength": 128 },
+        "matrixId": { "type": "string", "maxLength": 128 },
+        "specificationId": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 128 },
+        "aiReviewId": { "type": "string", "maxLength": 128 },
+        "approvalId": { "type": "string", "maxLength": 128 },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "IN_PROGRESS", "PENDING_REVIEW", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REVISION_REQUIRED", "ARCHIVED"]
+        },
+        "version": { "type": "number" },
+        "isSoftDeleted": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "code", "title", "academicYear", "subject", "grade", "departmentId", "currentStep", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "description": "Kết quả kiểm tra, mã đề và dữ liệu thống kê phổ điểm / CTT",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 128 },
+        "workflowId": { "type": "string", "maxLength": 128 },
+        "academicYear": { "type": "string", "maxLength": 64 },
+        "subject": { "type": "string", "maxLength": 128 },
+        "grade": { "type": "number" },
+        "variantCode": { "type": "string", "maxLength": 32 },
+        "studentCount": { "type": "number" },
+        "meanScore": { "type": "number" },
+        "passRatePercent": { "type": "number" },
+        "statisticsJson": { "type": "string", "maxLength": 12000 },
+        "status": { "type": "string", "enum": ["RECORDED", "VERIFIED", "ARCHIVED"] },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "examId", "variantCode", "meanScore", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Nhật ký kiểm toán bảo mật hệ thống bất biến (Append-only)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "actorUserId": { "type": "string", "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 256 },
+        "actorRole": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 128 },
+        "targetType": { "type": "string", "maxLength": 128 },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "summary": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["ALLOWED", "DENIED"] },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "actorUserId", "action", "targetType", "targetId", "summary", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "FileAssetMetadata": {
+      "title": "FileAssetMetadata",
+      "description": "Metadata tệp tài liệu lưu trên Firebase Storage (Word, PDF, Excel, Hình ảnh câu hỏi, Ngữ liệu, Hồ sơ kiểm tra, Báo cáo thẩm định, Báo cáo kết quả)",
+      "type": "object",
+      "properties": {
+        "fileId": { "type": "string", "maxLength": 128 },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "module": {
+          "type": "string",
+          "enum": [
+            "WORD_DOCUMENT",
+            "PDF_DOCUMENT",
+            "EXCEL_SPREADSHEET",
+            "QUESTION_IMAGE",
+            "CORPUS_MATERIAL",
+            "EXAM_DOSSIER_PACKAGE",
+            "APPRAISAL_REPORT",
+            "RESULT_ANALYSIS_REPORT"
+          ]
+        },
+        "documentId": { "type": "string", "maxLength": 128 },
+        "versionId": { "type": "string", "maxLength": 64 },
+        "originalFilename": { "type": "string", "maxLength": 256 },
+        "storagePath": { "type": "string", "maxLength": 512 },
+        "contentType": { "type": "string", "maxLength": 128 },
+        "size": { "type": "number" },
+        "uploadedBy": { "type": "string", "maxLength": 128 },
+        "uploadedAt": { "type": "string", "format": "date-time" },
+        "accessLevel": {
+          "type": "string",
+          "enum": [
+            "SCHOOL_INTERNAL",
+            "DEPARTMENT_SCOPED",
+            "CONFIDENTIAL_EXAM",
+            "SECRET_ANSWER_KEY",
+            "LEADERSHIP_ONLY"
+          ]
+        },
+        "retentionPolicy": {
+          "type": "string",
+          "enum": ["STANDARD_ACTIVE", "ARCHIVED_5_YEARS", "LEGAL_HOLD_LOCKED"]
+        },
+        "publicUrlAllowed": { "type": "boolean" },
+        "isSoftDeleted": { "type": "boolean" },
+        "status": { "type": "string", "maxLength": 64 },
+        "version": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "fileId",
+        "schoolId",
+        "module",
+        "documentId",
+        "versionId",
+        "originalFilename",
+        "storagePath",
+        "contentType",
+        "size",
+        "uploadedBy",
+        "uploadedAt",
+        "accessLevel",
+        "status",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/schools/{schoolId}": {
+      "schema": { "$ref": "#/entities/School" },
+      "description": "Thông tin trường học, cấu hình và trạng thái (Multi-tenant root)"
+    },
+    "/schools/{schoolId}/users/{userId}": {
+      "schema": { "$ref": "#/entities/SchoolUser" },
+      "description": "Hồ sơ giáo viên, tổ chuyên môn, vai trò và trạng thái thuộc trường"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/SchoolUser" },
+      "description": "Hồ sơ người dùng gốc phục vụ tra cứu xác thực đa trường"
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Thông tin PII riêng tư của người dùng (Email, Số điện thoại)"
+    },
+    "/schools/{schoolId}/departments/{departmentId}": {
+      "schema": { "$ref": "#/entities/Department" },
+      "description": "Tổ chuyên môn, tổ trưởng và thông tin liên kết"
+    },
+    "/schools/{schoolId}/teachingAssignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/TeachingAssignment" },
+      "description": "Phân công giảng dạy theo giáo viên, năm học, cấp học, môn học và khối lớp"
+    },
+    "/schools/{schoolId}/permissions/{permissionId}": {
+      "schema": { "$ref": "#/entities/PermissionGrant" },
+      "description": "Quyền chức năng và phạm vi cấp học - môn học - khối lớp của người dùng"
+    },
+    "/schools/{schoolId}/curriculum/{curriculumId}": {
+      "schema": { "$ref": "#/entities/CurriculumItem" },
+      "description": "Chương trình giáo dục, chủ đề, yêu cầu cần đạt và nguồn"
+    },
+    "/schools/{schoolId}/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Ngân hàng câu hỏi chuẩn hóa (mỗi câu hỏi là 1 document độc lập)"
+    },
+    "/schools/{schoolId}/questions/{questionId}/versions/{versionId}": {
+      "schema": { "$ref": "#/entities/QuestionVersion" },
+      "description": "Bộ sưu tập phiên bản lịch sử của từng câu hỏi"
+    },
+    "/schools/{schoolId}/matrices/{matrixId}": {
+      "schema": { "$ref": "#/entities/Matrix" },
+      "description": "Ma trận đề kiểm tra, cấu trúc, tổng điểm và phiên bản"
+    },
+    "/schools/{schoolId}/specifications/{specificationId}": {
+      "schema": { "$ref": "#/entities/Specification" },
+      "description": "Bản đặc tả kỹ thuật liên kết với ma trận đề kiểm tra"
+    },
+    "/schools/{schoolId}/exams/{examId}": {
+      "schema": { "$ref": "#/entities/Exam" },
+      "description": "Đề kiểm tra định kỳ, danh sách câu hỏi, mã đề, phiên bản và trạng thái"
+    },
+    "/schools/{schoolId}/exams/{examId}/versions/{versionId}": {
+      "schema": { "$ref": "#/entities/ExamVersion" },
+      "description": "Bộ sưu tập phiên bản lịch sử của từng đề kiểm tra"
+    },
+    "/schools/{schoolId}/aiReviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/AiReview" },
+      "description": "Báo cáo AI kiểm định chất lượng đề, lỗi, đề xuất và phiên bản được kiểm tra"
+    },
+    "/schools/{schoolId}/approvals/{approvalId}": {
+      "schema": { "$ref": "#/entities/Approval" },
+      "description": "Hồ sơ thẩm định và quyết định phê duyệt chính thức"
+    },
+    "/schools/{schoolId}/examWorkflows/{workflowId}": {
+      "schema": { "$ref": "#/entities/ExamWorkflow" },
+      "description": "Quy trình 9 bước, trạng thái, người phụ trách và các mã hồ sơ liên kết"
+    },
+    "/schools/{schoolId}/examResults/{resultId}": {
+      "schema": { "$ref": "#/entities/ExamResult" },
+      "description": "Kết quả kiểm tra, mã đề và dữ liệu thống kê phổ điểm / CTT"
+    },
+    "/schools/{schoolId}/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Nhật ký thao tác bảo mật bất biến của trường"
+    },
+    "/schools/{schoolId}/fileAssets/{fileId}": {
+      "schema": { "$ref": "#/entities/FileAssetMetadata" },
+      "description": "Metadata tệp tài liệu trên Firebase Storage (schoolId/module/documentId/versionId/filename)"
+    }
+  }
+}

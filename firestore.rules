@@ -1,0 +1,802 @@
+rules_version = '2';
+
+// ============================================================================
+// EDU TEST AI MULTI-SCHOOL – FIREBASE FIRESTORE SECURITY RULES
+// I. 9 NGUYÊN TẮC BẢO MẬT CỐT LÕI:
+// 1. Deny by default (Mặc định từ chối toàn bộ).
+// 2. Xác thực UID (request.auth.uid hợp lệ & email_verified == true).
+// 3. Kiểm tra membership (schools/{schoolId}/memberships/{uid} hoặc platformMemberships).
+// 4. Kiểm tra trạng thái trường (schools/{schoolId}.data.status == 'ACTIVE').
+// 5. Kiểm tra vai trò (TEACHER, HEAD_OF_DEPARTMENT, VICE_PRINCIPAL, PRINCIPAL, SCHOOL_ADMIN).
+// 6. Kiểm tra quyền chức năng (CREATE_QUESTION, CREATE_MATRIX, CREATE_EXAM, REVIEW_EXAM...).
+// 7. Kiểm tra môn và khối lớp (allowedSubjectsCsv & allowedGradesCsv).
+// 8. Kiểm tra quyền truy cập hồ sơ & bảo vệ Đề mật (Chặn cả Super Admin & School Admin đọc đề mật).
+// 9. Không tin tưởng schoolId do client gửi (Đối chiếu incoming().schoolId == schoolId trên path).
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 1: DENY BY DEFAULT (MẶC ĐỊNH TỪ CHỐI TOÀN BỘ)
+    // ------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 2: XÁC THỰC UID & ĐỊNH DANH HỢP LỆ
+    // ------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null &&
+             request.auth.uid is string &&
+             request.auth.uid.size() >= 1 &&
+             request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string &&
+             id.size() >= 1 &&
+             id.size() <= 128 &&
+             id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(authUid) {
+      return isSignedIn() && request.auth.uid == authUid;
+    }
+
+    // Super Admin nền tảng (Chỉ quản lý danh mục trường, KHÔNG mặc nhiên đọc đề mật của trường)
+    function isPlatformSuperAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'phanducquy24@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 4: KIỂM TRA TRẠNG THÁI TRƯỜNG (CHỈ CHO PHÉP KHI TRƯỜNG ĐANG ACTIVE)
+    // ------------------------------------------------------------------------
+    function isSchoolActive(schoolId) {
+      return exists(/databases/$(database)/documents/schools/$(schoolId)) &&
+             get(/databases/$(database)/documents/schools/$(schoolId)).data.status == 'ACTIVE';
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 3: KIỂM TRA MEMBERSHIP ĐA TRƯỜNG (ACTIVE MEMBERSHIP)
+    // Khi membership bị thu hồi hoặc khóa (status != 'ACTIVE'), mất quyền truy cập ngay lập tức
+    // ------------------------------------------------------------------------
+    function hasActiveSchoolMembershipDoc(schoolId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/schools/$(schoolId)/memberships/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/schools/$(schoolId)/memberships/$(request.auth.uid)).data.schoolId == schoolId &&
+             get(/databases/$(database)/documents/schools/$(schoolId)/memberships/$(request.auth.uid)).data.userId == request.auth.uid &&
+             get(/databases/$(database)/documents/schools/$(schoolId)/memberships/$(request.auth.uid)).data.status == 'ACTIVE';
+    }
+
+    function hasActiveSchoolAccount(schoolId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/schools/$(schoolId)/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/schools/$(schoolId)/users/$(request.auth.uid)).data.schoolId == schoolId &&
+             get(/databases/$(database)/documents/schools/$(schoolId)/users/$(request.auth.uid)).data.status == 'ACTIVE';
+    }
+
+    function hasActivePlatformMembership(schoolId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/platformMemberships/$(request.auth.uid + '_' + schoolId)) &&
+             get(/databases/$(database)/documents/platformMemberships/$(request.auth.uid + '_' + schoolId)).data.schoolId == schoolId &&
+             get(/databases/$(database)/documents/platformMemberships/$(request.auth.uid + '_' + schoolId)).data.userId == request.auth.uid &&
+             get(/databases/$(database)/documents/platformMemberships/$(request.auth.uid + '_' + schoolId)).data.status == 'ACTIVE';
+    }
+
+    // Kiểm tra tổng hợp: Trường đang ACTIVE + Người dùng có Membership ACTIVE tại trường đó
+    function belongsToSchool(schoolId) {
+      return isSignedIn() &&
+             isSchoolActive(schoolId) && (
+               hasActiveSchoolMembershipDoc(schoolId) ||
+               hasActiveSchoolAccount(schoolId) ||
+               hasActivePlatformMembership(schoolId)
+             );
+    }
+
+    function schoolUserProfile(schoolId) {
+      return hasActiveSchoolMembershipDoc(schoolId)
+        ? get(/databases/$(database)/documents/schools/$(schoolId)/memberships/$(request.auth.uid)).data
+        : get(/databases/$(database)/documents/schools/$(schoolId)/users/$(request.auth.uid)).data;
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 5: KIỂM TRA VAI TRÒ TRONG TRƯỜNG (ROLE VERIFICATION)
+    // ------------------------------------------------------------------------
+    function hasRoleInSchool(schoolId, roleCode) {
+      return belongsToSchool(schoolId) &&
+             schoolUserProfile(schoolId).roles is string &&
+             schoolUserProfile(schoolId).roles.matches('.*' + roleCode + '.*');
+    }
+
+    function isBoardOfDirectors(schoolId) {
+      return hasRoleInSchool(schoolId, 'PRINCIPAL') ||
+             hasRoleInSchool(schoolId, 'VICE_PRINCIPAL');
+    }
+
+    function isHeadOfDepartment(schoolId) {
+      return hasRoleInSchool(schoolId, 'HEAD_OF_DEPARTMENT');
+    }
+
+    function isHeadOfTargetDepartment(schoolId, departmentId) {
+      return isHeadOfDepartment(schoolId) &&
+             'departmentId' in schoolUserProfile(schoolId) &&
+             schoolUserProfile(schoolId).departmentId == departmentId;
+    }
+
+    function isSchoolAdmin(schoolId) {
+      return hasRoleInSchool(schoolId, 'SCHOOL_ADMIN') ||
+             hasRoleInSchool(schoolId, 'SYSTEM_ADMIN');
+    }
+
+    function isSchoolLeadershipOrAdmin(schoolId) {
+      return isBoardOfDirectors(schoolId) || isSchoolAdmin(schoolId);
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 6: KIỂM TRA QUYỀN CHỨC NĂNG (FUNCTIONAL PERMISSIONS)
+    // ------------------------------------------------------------------------
+    function hasFunctionalPermission(schoolId, permissionCode) {
+      return isBoardOfDirectors(schoolId) || (
+        belongsToSchool(schoolId) &&
+        (!('functionalPermissionsCsv' in schoolUserProfile(schoolId)) ||
+         schoolUserProfile(schoolId).functionalPermissionsCsv.matches('.*,' + permissionCode + ',.*'))
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 7: KIỂM TRA PHẠM VI MÔN HỌC VÀ KHỐI LỚP (SUBJECT & GRADE SCOPE)
+    // ------------------------------------------------------------------------
+    function hasSubjectAndGradeScope(schoolId, subject, grade) {
+      return isBoardOfDirectors(schoolId) || (
+        belongsToSchool(schoolId) &&
+        (!('allowedSubjectsCsv' in schoolUserProfile(schoolId)) ||
+         schoolUserProfile(schoolId).allowedSubjectsCsv.matches('.*,' + subject + ',.*')) &&
+        (!('allowedGradesCsv' in schoolUserProfile(schoolId)) ||
+         schoolUserProfile(schoolId).allowedGradesCsv.matches('.*,' + string(grade) + ',.*'))
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 8: KIỂM TRA QUYỀN TRUY CẬP HỒ SƠ & BẢO VỆ ĐỀ MẬT + KHÓA HỒ SƠ ĐÃ DUYỆT
+    // - Hồ sơ đã APPROVED / PUBLISHED / LOCKED / ARCHIVED không được sửa từ Client.
+    // - Đề mật (SECRET_EXAM / CONFIDENTIAL_EXAM): Chặn tuyệt đối người không được phân công,
+    //   chặn cả Super Admin và School Admin nếu không có quyền chuyên môn được gán.
+    // ------------------------------------------------------------------------
+    function isLockedOrApprovedStatus(statusValue) {
+      return statusValue in ['APPROVED', 'PUBLISHED', 'LOCKED', 'ARCHIVED'];
+    }
+
+    function canAccessDossier(schoolId, recordData) {
+      return belongsToSchool(schoolId) && (
+        isBoardOfDirectors(schoolId) ||
+        recordData.createdBy == request.auth.uid ||
+        ('assignedUserIdsCsv' in recordData &&
+         recordData.assignedUserIdsCsv is string &&
+         recordData.assignedUserIdsCsv.matches('.*,' + request.auth.uid + ',.*')) ||
+        ('assignedDossierIdsCsv' in schoolUserProfile(schoolId) &&
+         schoolUserProfile(schoolId).assignedDossierIdsCsv is string &&
+         schoolUserProfile(schoolId).assignedDossierIdsCsv.matches('.*,' + recordData.id + ',.*'))
+      );
+    }
+
+    function canReadConfidentialExamData(schoolId, recordData) {
+      return belongsToSchool(schoolId) && (
+        (recordData.securityClassification != 'SECRET_EXAM' &&
+         recordData.securityClassification != 'CONFIDENTIAL_EXAM') ||
+        recordData.createdBy == request.auth.uid ||
+        ('assignedUserIdsCsv' in recordData &&
+         recordData.assignedUserIdsCsv is string &&
+         recordData.assignedUserIdsCsv.matches('.*,' + request.auth.uid + ',.*')) ||
+        (isBoardOfDirectors(schoolId) &&
+         'canReadConfidentialExam' in schoolUserProfile(schoolId) &&
+         schoolUserProfile(schoolId).canReadConfidentialExam == true)
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // NGUYÊN TẮC 9: KHÔNG TIN TƯỞNG schoolId DO CLIENT GỬI (PATH & PAYLOAD MATCH)
+    // ------------------------------------------------------------------------
+    function isValidScopedRecord(data, schoolId) {
+      return data.schoolId is string &&
+             data.schoolId == schoolId &&
+             data.createdBy is string && data.createdBy.size() <= 128 &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64 &&
+             data.status is string && data.status.size() <= 64;
+    }
+
+    // Endpoint kiểm tra kết nối kỹ thuật (chỉ cho phép get 1 doc, cấm list và cấm write)
+    match /test/connection {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // Danh mục Admin nền tảng (Chỉ Backend Admin SDK quản lý, Client cấm ghi)
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isOwner(adminId) || isPlatformSuperAdmin());
+      allow list: if isPlatformSuperAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // VALIDATION BLUEPRINTS CHO CÁC BỘ SƯU TẬP CỐT LÕI (MỤC II)
+    // ------------------------------------------------------------------------
+    function isValidSchool(data, schoolId) {
+      return data.keys().hasAll(['id', 'code', 'name', 'governingBody', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly(['id', 'code', 'name', 'governingBody', 'educationLevels', 'academicYear', 'configJson', 'status', 'version', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']) &&
+             data.id == schoolId &&
+             data.code is string && data.code.size() <= 64 &&
+             data.name is string && data.name.size() <= 256 &&
+             data.governingBody is string && data.governingBody.size() <= 256 &&
+             data.status in ['PENDING_ACTIVATION', 'ACTIVE', 'SUSPENDED', 'ARCHIVED'] &&
+             data.createdBy is string && data.createdBy.size() <= 128 &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['id', 'schoolId', 'fullName', 'roles', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly([
+               'id', 'authUid', 'teacherProfileId', 'schoolId', 'username', 'fullName',
+               'departmentId', 'departmentName', 'roles', 'assignedSubjects',
+               'allowedSubjectsCsv', 'allowedGradesCsv', 'functionalPermissionsCsv',
+               'assignedDossierIdsCsv', 'canApproveFinalExam', 'canReadConfidentialExam',
+               'status', 'version', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'
+             ]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.schoolId is string && data.schoolId.size() <= 128 &&
+             data.fullName is string && data.fullName.size() <= 256 &&
+             data.roles is string && data.roles.size() <= 256 &&
+             data.status in ['ACTIVE', 'DISABLED', 'LOCKED', 'UNACTIVATED'] &&
+             data.createdBy is string && data.createdBy.size() <= 128 &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll(['userId', 'schoolId', 'email', 'updatedAt']) &&
+             data.keys().hasOnly(['userId', 'schoolId', 'email', 'phone', 'lastLoginAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.schoolId is string && data.schoolId.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidQuestion(data, schoolId) {
+      return data.keys().hasAll(['id', 'schoolId', 'code', 'subject', 'grade', 'stem', 'securityClassification', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly([
+               'id', 'schoolId', 'code', 'levelId', 'grade', 'subject', 'departmentId',
+               'curriculumId', 'format', 'cognitiveLevel', 'stem', 'optionsJson',
+               'correctAnswer', 'points', 'mediaStoragePath', 'assignedUserIdsCsv',
+               'securityClassification', 'status', 'version', 'isSoftDeleted',
+               'createdBy', 'updatedBy', 'createdAt', 'updatedAt'
+             ]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.schoolId == schoolId &&
+             data.code is string && data.code.size() <= 64 &&
+             data.subject is string && data.subject.size() <= 128 &&
+             data.grade is number && data.grade >= 1 && data.grade <= 12 &&
+             data.stem is string && data.stem.size() <= 5000 &&
+             data.securityClassification in ['DRAFT_QUESTION', 'APPROVED_QUESTION', 'SECRET_EXAM'] &&
+             data.status is string && data.status.size() <= 64 &&
+             data.createdBy is string && data.createdBy.size() <= 128 &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidExam(data, schoolId) {
+      return data.keys().hasAll(['id', 'schoolId', 'code', 'title', 'subject', 'grade', 'securityClassification', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly([
+               'id', 'schoolId', 'code', 'title', 'academicYear', 'levelId', 'grade',
+               'subject', 'departmentId', 'departmentName', 'matrixId', 'specificationId',
+               'questionIdsCsv', 'variantCodesCsv', 'totalPoints', 'exportedFileStoragePath',
+               'assignedUserIdsCsv', 'securityClassification', 'version', 'isSoftDeleted',
+               'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'
+             ]) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.schoolId == schoolId &&
+             data.code is string && data.code.size() <= 64 &&
+             data.title is string && data.title.size() <= 512 &&
+             data.subject is string && data.subject.size() <= 128 &&
+             data.grade is number && data.grade >= 1 && data.grade <= 12 &&
+             data.securityClassification in ['EXAM_IN_PREPARATION', 'SECRET_EXAM', 'CONFIDENTIAL_EXAM', 'PUBLISHED_EXAM', 'ARCHIVED_RECORD'] &&
+             data.status is string && data.status.size() <= 64 &&
+             data.createdBy is string && data.createdBy.size() <= 128 &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    // ========================================================================
+    // II. THIẾT KẾ FIRESTORE RULES CHO 10 NHÓM BỘ SƯU TẬP CỐT LÕI
+    // ========================================================================
+
+    // NHÓM 2A: users cấp Root (/users/{userId}) - Chặn tự nâng quyền
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isPlatformSuperAdmin());
+      allow list: if isSignedIn() && (existing().id == request.auth.uid || isPlatformSuperAdmin());
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUserProfile(incoming()) &&
+                    incoming().roles == 'TEACHER' &&
+                    incoming().canApproveFinalExam != true &&
+                    incoming().canReadConfidentialExam != true &&
+                    incoming().createdBy == request.auth.uid;
+      allow update: if isValidId(userId) && isOwner(userId) && isValidUserProfile(incoming()) &&
+                    incoming().roles == existing().roles &&
+                    incoming().schoolId == existing().schoolId &&
+                    incoming().status == existing().status &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'departmentName', 'updatedAt']);
+      allow delete: if false;
+
+      match /private/{docId} {
+        allow get, list: if isValidId(userId) && (isOwner(userId) || isPlatformSuperAdmin());
+        allow create, update: if isValidId(userId) && isValidId(docId) && isOwner(userId) && isValidUserPrivateInfo(incoming());
+        allow delete: if false;
+      }
+    }
+
+    // NHÓM 1: schools (/schools/{schoolId})
+    // Tạo trường & gán School Admin bắt buộc qua Backend (Mục IV)
+    match /schools/{schoolId} {
+      allow get: if isValidId(schoolId) && (belongsToSchool(schoolId) || isPlatformSuperAdmin());
+      allow list: if isSignedIn() && (isPlatformSuperAdmin() || existing().createdBy == request.auth.uid);
+      allow create: if false; // Mục IV: Tạo trường bắt buộc thực hiện qua Backend Authorization
+      allow update: if isValidId(schoolId) && isBoardOfDirectors(schoolId) && isValidSchool(incoming(), schoolId) &&
+                    incoming().id == existing().id &&
+                    incoming().status == existing().status &&
+                    incoming().createdAt == existing().createdAt;
+      allow delete: if false;
+
+      // NHÓM 2B: users cấp Trường (/schools/{schoolId}/users/{userId})
+      match /users/{userId} {
+        allow get: if isValidId(schoolId) && isValidId(userId) && belongsToSchool(schoolId);
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(userId) &&
+                      isSchoolLeadershipOrAdmin(schoolId) &&
+                      isValidUserProfile(incoming()) &&
+                      incoming().schoolId == schoolId &&
+                      !incoming().roles.matches('.*(SUPER_ADMIN|SYSTEM_ADMIN|PRINCIPAL).*');
+        allow update: if isValidId(schoolId) && isValidId(userId) &&
+                      isValidUserProfile(incoming()) &&
+                      incoming().schoolId == schoolId &&
+                      incoming().createdAt == existing().createdAt && (
+                        // Giáo viên chỉ được sửa họ tên cá nhân, cấm tự nâng roles/status/permissions
+                        (isOwner(userId) &&
+                         incoming().roles == existing().roles &&
+                         incoming().status == existing().status &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'updatedAt', 'updatedBy'])) ||
+                        // School Admin sửa hồ sơ giáo viên trong trường nhưng cấm tự cấp SUPER_ADMIN
+                        (isSchoolLeadershipOrAdmin(schoolId) &&
+                         !incoming().roles.matches('.*(SUPER_ADMIN|SYSTEM_ADMIN).*'))
+                      );
+        allow delete: if false;
+      }
+
+      // NHÓM 3: memberships (/schools/{schoolId}/memberships/{userId})
+      // Quản lý tư cách thành viên đa trường; thay đổi quyền nhạy cảm hoặc gán Admin phải qua Backend (Mục IV)
+      match /memberships/{userId} {
+        allow get: if isValidId(schoolId) && isValidId(userId) && isSignedIn() && (
+          request.auth.uid == userId || isSchoolLeadershipOrAdmin(schoolId)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId && (
+          existing().userId == request.auth.uid || isSchoolLeadershipOrAdmin(schoolId)
+        );
+        // Cấm client tự ghi/sửa membership trực tiếp để chống tự nâng quyền hoặc giả mạo schoolId
+        allow create, update, delete: if false;
+      }
+
+      // NHÓM 4: permissions (/schools/{schoolId}/permissions/{permissionId})
+      // Thay đổi quyền nhạy cảm bắt buộc kiểm tra và ghi qua Backend (Mục IV)
+      match /permissions/{permissionId} {
+        allow get: if isValidId(schoolId) && isValidId(permissionId) && belongsToSchool(schoolId) && (
+          existing().userId == request.auth.uid || isSchoolLeadershipOrAdmin(schoolId)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId && (
+          existing().userId == request.auth.uid || isSchoolLeadershipOrAdmin(schoolId)
+        );
+        allow create, update, delete: if false;
+      }
+
+      // NHÓM 5: questions (/schools/{schoolId}/questions/{questionId})
+      // Kiểm tra membership ACTIVE, trường ACTIVE, quyền CREATE_QUESTION, phạm vi Môn & Khối lớp, khóa khi APPROVED
+      match /questions/{questionId} {
+        allow get: if isValidId(schoolId) && isValidId(questionId) &&
+                   belongsToSchool(schoolId) &&
+                   canReadConfidentialExamData(schoolId, existing());
+        allow list: if isValidId(schoolId) &&
+                    belongsToSchool(schoolId) &&
+                    existing().schoolId == schoolId &&
+                    canReadConfidentialExamData(schoolId, existing());
+        allow create: if isValidId(schoolId) && isValidId(questionId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidQuestion(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().status == 'DRAFT' &&
+                      hasFunctionalPermission(schoolId, 'CREATE_QUESTION') &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(questionId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidQuestion(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().subject == existing().subject &&
+                      incoming().grade == existing().grade && (
+                        (existing().createdBy == request.auth.uid &&
+                         incoming().status in ['DRAFT', 'SUBMITTED_FOR_REVIEW'] &&
+                         hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade)) ||
+                        (isHeadOfTargetDepartment(schoolId, existing().departmentId) &&
+                         incoming().status in ['APPRAISED', 'NEEDS_REVISION'])
+                      );
+        allow delete: if false;
+
+        match /versions/{versionId} {
+          allow get, list: if isValidId(schoolId) && isValidId(questionId) && belongsToSchool(schoolId);
+          allow create: if isValidId(schoolId) && isValidId(questionId) && isValidId(versionId) &&
+                        belongsToSchool(schoolId) &&
+                        isValidScopedRecord(incoming(), schoolId) &&
+                        incoming().createdBy == request.auth.uid;
+          allow update, delete: if false;
+        }
+      }
+
+      // NHÓM 6: matrices (/schools/{schoolId}/matrices/{matrixId} & specifications)
+      match /matrices/{matrixId} {
+        allow get: if isValidId(schoolId) && isValidId(matrixId) && belongsToSchool(schoolId) && (
+          existing().createdBy == request.auth.uid ||
+          isHeadOfTargetDepartment(schoolId, existing().departmentId) ||
+          isBoardOfDirectors(schoolId) ||
+          hasSubjectAndGradeScope(schoolId, existing().subject, existing().grade)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(matrixId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().status == 'DRAFT' &&
+                      hasFunctionalPermission(schoolId, 'CREATE_MATRIX') &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(matrixId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt && (
+                        (existing().createdBy == request.auth.uid &&
+                         incoming().status in ['DRAFT', 'SUBMITTED_FOR_REVIEW'] &&
+                         hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade)) ||
+                        (isHeadOfTargetDepartment(schoolId, existing().departmentId) &&
+                         incoming().status in ['APPRAISED', 'NEEDS_REVISION'])
+                      );
+        allow delete: if false;
+      }
+
+      match /specifications/{specificationId} {
+        allow get: if isValidId(schoolId) && isValidId(specificationId) && belongsToSchool(schoolId);
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(specificationId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().status == 'DRAFT' &&
+                      hasFunctionalPermission(schoolId, 'CREATE_MATRIX') &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(specificationId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt && (
+                        (existing().createdBy == request.auth.uid &&
+                         incoming().status in ['DRAFT', 'SUBMITTED_FOR_REVIEW']) ||
+                        (isHeadOfTargetDepartment(schoolId, existing().departmentId) &&
+                         incoming().status in ['APPRAISED', 'NEEDS_REVISION'])
+                      );
+        allow delete: if false;
+      }
+
+      // NHÓM 7: exams (/schools/{schoolId}/exams/{examId})
+      // Bảo vệ đề mật (canReadConfidentialExamData chặn cả Super Admin & School Admin nếu không có quyền chuyên môn)
+      // Khóa sửa khi đã APPROVED / PUBLISHED / LOCKED
+      match /exams/{examId} {
+        allow get: if isValidId(schoolId) && isValidId(examId) &&
+                   belongsToSchool(schoolId) &&
+                   canReadConfidentialExamData(schoolId, existing()) && (
+                     !isHeadOfDepartment(schoolId) ||
+                     isBoardOfDirectors(schoolId) ||
+                     existing().createdBy == request.auth.uid ||
+                     existing().departmentId == schoolUserProfile(schoolId).departmentId ||
+                     hasSubjectAndGradeScope(schoolId, existing().subject, existing().grade)
+                   );
+        allow list: if isValidId(schoolId) &&
+                    belongsToSchool(schoolId) &&
+                    existing().schoolId == schoolId &&
+                    canReadConfidentialExamData(schoolId, existing());
+        allow create: if isValidId(schoolId) && isValidId(examId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidExam(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().status == 'DRAFT' &&
+                      hasFunctionalPermission(schoolId, 'CREATE_EXAM') &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(examId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidExam(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().subject == existing().subject &&
+                      incoming().grade == existing().grade && (
+                        ((existing().createdBy == request.auth.uid ||
+                          canAccessDossier(schoolId, existing())) &&
+                         incoming().status in ['DRAFT', 'SUBMITTED_FOR_REVIEW'] &&
+                         hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade)) ||
+                        (isHeadOfTargetDepartment(schoolId, existing().departmentId) &&
+                         incoming().status in ['APPRAISED', 'NEEDS_REVISION'])
+                      );
+        allow delete: if false;
+
+        match /versions/{versionId} {
+          allow get, list: if isValidId(schoolId) && isValidId(examId) && belongsToSchool(schoolId) &&
+                           canReadConfidentialExamData(schoolId, get(/databases/$(database)/documents/schools/$(schoolId)/exams/$(examId)).data);
+          allow create: if isValidId(schoolId) && isValidId(examId) && isValidId(versionId) &&
+                        belongsToSchool(schoolId) &&
+                        isValidScopedRecord(incoming(), schoolId) &&
+                        incoming().createdBy == request.auth.uid;
+          allow update, delete: if false;
+        }
+      }
+
+      // NHÓM 8: workflows (/schools/{schoolId}/workflows/{workflowId} & examWorkflows)
+      match /workflows/{workflowId} {
+        allow get: if isValidId(schoolId) && isValidId(workflowId) && belongsToSchool(schoolId) && (
+          isBoardOfDirectors(schoolId) ||
+          existing().createdBy == request.auth.uid ||
+          isHeadOfTargetDepartment(schoolId, existing().departmentId) ||
+          hasSubjectAndGradeScope(schoolId, existing().subject, existing().grade)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(workflowId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().status == 'DRAFT' &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(workflowId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().status in ['DRAFT', 'IN_PROGRESS', 'SUBMITTED_FOR_REVIEW', 'APPRAISED'] && (
+                        existing().createdBy == request.auth.uid ||
+                        isHeadOfTargetDepartment(schoolId, existing().departmentId)
+                      );
+        allow delete: if false;
+      }
+
+      match /examWorkflows/{workflowId} {
+        allow get: if isValidId(schoolId) && isValidId(workflowId) && belongsToSchool(schoolId) && (
+          isBoardOfDirectors(schoolId) ||
+          existing().createdBy == request.auth.uid ||
+          isHeadOfTargetDepartment(schoolId, existing().departmentId) ||
+          hasSubjectAndGradeScope(schoolId, existing().subject, existing().grade)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(workflowId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().status == 'DRAFT' &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(workflowId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().status in ['DRAFT', 'IN_PROGRESS', 'SUBMITTED_FOR_REVIEW', 'APPRAISED'] && (
+                        existing().createdBy == request.auth.uid ||
+                        isHeadOfTargetDepartment(schoolId, existing().departmentId)
+                      );
+        allow delete: if false;
+      }
+
+      // NHÓM 9: approvals (/schools/{schoolId}/approvals/{approvalId})
+      // Mục IV: Phê duyệt đề chính thức (APPROVED) bắt buộc thực hiện qua Backend;
+      // Tổ trưởng chỉ được tạo biên bản thẩm định cấp tổ (APPRAISED).
+      match /approvals/{approvalId} {
+        allow get: if isValidId(schoolId) && isValidId(approvalId) && belongsToSchool(schoolId) && (
+          isBoardOfDirectors(schoolId) ||
+          existing().createdBy == request.auth.uid ||
+          existing().reviewerUserId == request.auth.uid ||
+          isHeadOfTargetDepartment(schoolId, existing().departmentId)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(approvalId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      incoming().reviewerUserId == request.auth.uid &&
+                      isHeadOfTargetDepartment(schoolId, incoming().departmentId) &&
+                      incoming().status in ['APPRAISED', 'REJECTED_BY_DEPARTMENT'];
+        allow update, delete: if false;
+      }
+
+      // NHÓM 10: results (/schools/{schoolId}/results/{resultId} & examResults)
+      match /results/{resultId} {
+        allow get: if isValidId(schoolId) && isValidId(resultId) && belongsToSchool(schoolId) && (
+          isBoardOfDirectors(schoolId) ||
+          existing().createdBy == request.auth.uid ||
+          isHeadOfTargetDepartment(schoolId, existing().departmentId) ||
+          hasSubjectAndGradeScope(schoolId, existing().subject, existing().grade)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(resultId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      hasFunctionalPermission(schoolId, 'ANALYZE_RESULTS') &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(resultId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      existing().createdBy == request.auth.uid &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt;
+        allow delete: if false;
+      }
+
+      match /examResults/{resultId} {
+        allow get: if isValidId(schoolId) && isValidId(resultId) && belongsToSchool(schoolId) && (
+          isBoardOfDirectors(schoolId) ||
+          existing().createdBy == request.auth.uid ||
+          isHeadOfTargetDepartment(schoolId, existing().departmentId) ||
+          hasSubjectAndGradeScope(schoolId, existing().subject, existing().grade)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(resultId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid &&
+                      hasSubjectAndGradeScope(schoolId, incoming().subject, incoming().grade);
+        allow update: if isValidId(schoolId) && isValidId(resultId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      !isLockedOrApprovedStatus(existing().status) &&
+                      existing().createdBy == request.auth.uid &&
+                      incoming().schoolId == existing().schoolId &&
+                      incoming().createdBy == existing().createdBy &&
+                      incoming().createdAt == existing().createdAt;
+        allow delete: if false;
+      }
+
+      // Các bộ sưu tập phụ trợ trong phạm vi trường
+      match /departments/{departmentId} {
+        allow get: if isValidId(schoolId) && isValidId(departmentId) && belongsToSchool(schoolId);
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create, update: if isValidId(schoolId) && isValidId(departmentId) &&
+                              isSchoolLeadershipOrAdmin(schoolId) &&
+                              isValidScopedRecord(incoming(), schoolId);
+        allow delete: if false;
+      }
+
+      match /teachingAssignments/{assignmentId} {
+        allow get: if isValidId(schoolId) && isValidId(assignmentId) && belongsToSchool(schoolId);
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create, update: if isValidId(schoolId) && isValidId(assignmentId) &&
+                              isSchoolLeadershipOrAdmin(schoolId) &&
+                              isValidScopedRecord(incoming(), schoolId);
+        allow delete: if isValidId(schoolId) && isValidId(assignmentId) && isSchoolLeadershipOrAdmin(schoolId);
+      }
+
+      match /curriculum/{curriculumId} {
+        allow get: if isValidId(schoolId) && isValidId(curriculumId) && belongsToSchool(schoolId);
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create, update: if isValidId(schoolId) && isValidId(curriculumId) &&
+                              (isHeadOfDepartment(schoolId) || isBoardOfDirectors(schoolId)) &&
+                              isValidScopedRecord(incoming(), schoolId) &&
+                              !isLockedOrApprovedStatus(existing().status);
+        allow delete: if false;
+      }
+
+      match /aiReviews/{reviewId} {
+        allow get: if isValidId(schoolId) && isValidId(reviewId) && belongsToSchool(schoolId);
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(reviewId) &&
+                      belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().createdBy == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      match /auditLogs/{logId} {
+        allow get: if isValidId(schoolId) && isValidId(logId) && isSchoolLeadershipOrAdmin(schoolId);
+        allow list: if isValidId(schoolId) && isSchoolLeadershipOrAdmin(schoolId) && existing().schoolId == schoolId;
+        allow create, update, delete: if false; // Chỉ Backend Admin SDK ghi nhật ký
+      }
+
+      match /fileAssets/{fileId} {
+        allow get: if isValidId(schoolId) && isValidId(fileId) && belongsToSchool(schoolId) && (
+          !(existing().accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY', 'LEADERSHIP_ONLY']) ||
+          existing().uploadedBy == request.auth.uid ||
+          (isBoardOfDirectors(schoolId) &&
+           'canReadConfidentialExam' in schoolUserProfile(schoolId) &&
+           schoolUserProfile(schoolId).canReadConfidentialExam == true)
+        );
+        allow list: if isValidId(schoolId) && belongsToSchool(schoolId) && existing().schoolId == schoolId;
+        allow create: if isValidId(schoolId) && isValidId(fileId) && belongsToSchool(schoolId) &&
+                      isValidScopedRecord(incoming(), schoolId) &&
+                      incoming().fileId == fileId &&
+                      incoming().uploadedBy == request.auth.uid &&
+                      incoming().size is number && incoming().size > 0 && incoming().size <= 15728640 &&
+                      (!(incoming().accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY']) || incoming().publicUrlAllowed == false);
+        allow update, delete: if false;
+      }
+    }
+
+    // =========================================================================
+    // DỮ LIỆU TOÀN CỤC MULTI-TENANT (CHỈ GHI QUA BACKEND AUTHORIZATION - MỤC IV)
+    // =========================================================================
+    match /schoolCatalog/{schoolId} {
+      allow get, list: if isSignedIn() && isValidId(schoolId) && (
+        belongsToSchool(schoolId) ||
+        hasActivePlatformMembership(schoolId) ||
+        isPlatformSuperAdmin()
+      );
+      allow create, update, delete: if false;
+    }
+
+    match /sharedCurriculums/{curriculumId} {
+      allow get, list: if isSignedIn() && isValidId(curriculumId);
+      allow create, update, delete: if false;
+    }
+
+    match /servicePlans/{planId} {
+      allow get, list: if isSignedIn() && isValidId(planId);
+      allow create, update, delete: if false;
+    }
+
+    match /platformConfigs/{configId} {
+      allow get, list: if isSignedIn() && isValidId(configId);
+      allow create, update, delete: if false;
+    }
+
+    match /platformMemberships/{membershipId} {
+      allow get: if isSignedIn() && isValidId(membershipId) && (
+        existing().userId == request.auth.uid ||
+        isSchoolLeadershipOrAdmin(existing().schoolId)
+      );
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Kho câu hỏi dùng chung liên trường: chỉ phát hành qua Backend sau khi cấp có thẩm quyền duyệt (Mục IV)
+    match /shared_question_repository/{sharedId} {
+      allow get, list: if isSignedIn() && isValidId(sharedId) && (
+        existing().sharingCategory == 'SYSTEM_INTERNAL_PUBLIC_BANK' ||
+        belongsToSchool(existing().contributingSchoolId)
+      );
+      allow create, update, delete: if false;
+    }
+  }
+}

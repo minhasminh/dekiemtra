@@ -1,0 +1,8 @@
+{
+  "name": " EDU TEST AI 13-11-2026",
+  "description": "Nền tảng thông minh hỗ trợ giáo viên xây dựng ngân hàng câu hỏi, ma trận và đề kiểm tra chuẩn GDPT 2018.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

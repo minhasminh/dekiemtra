@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+@layer base {
+  :root {
+    --font-sans: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    /* Giai đoạn 21: Modern Education SaaS Dashboard Official Palette */
+    --edu-primary: #123D75;
+    --edu-primary-dark: #0D2D59;
+    --edu-secondary: #087F8C;
+    --edu-accent: #F4A340;
+    --edu-bg: #F5F7FB;
+    --edu-surface: #FFFFFF;
+    --edu-text: #1F2937;
+    --edu-border: #E5E7EB;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--edu-bg);
+    color: var(--edu-text);
+    font-size: 14px;
+    line-height: 1.55;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.edu-bg-primary {
+  background-color: #123D75;
+}
+
+.edu-bg-primary-dark {
+  background-color: #0D2D59;
+}
+
+.edu-bg-secondary {
+  background-color: #087F8C;
+}
+
+.edu-bg-accent {
+  background-color: #F4A340;
+}
+
+.edu-bg-canvas {
+  background-color: #F5F7FB;
+}
+
+.edu-text-primary {
+  color: #123D75;
+}
+
+.edu-text-secondary {
+  color: #087F8C;
+}
+
+.edu-border-default {
+  border-color: #E5E7EB;
+}

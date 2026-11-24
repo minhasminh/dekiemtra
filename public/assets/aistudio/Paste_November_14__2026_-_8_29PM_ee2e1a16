@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rung Chuông Vàng Nhí - Bảng Chia 2, 3, 4, 5 (Toán Lớp 2)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito nét tròn trịa, hiển thị dấu Tiếng Việt rõ ràng chuẩn Tiểu học Lớp 2 -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --gold-bright: #fde047;
+            --gold-main: #eab308;
+            --slate-board: #0b2942;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #0f3d5e 0%, #0f172a 58%, #020617 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Ánh đèn sân khấu Rung Chuông Vàng */
+        .stage-spotlight {
+            position: fixed;
+            top: -20%;
+            width: 48vw;
+            height: 85vh;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.24;
+            filter: blur(50px);
+        }
+        .beam-left {
+            left: -10%;
+            background: conic-gradient(from 140deg at 50% 0%, #facc15, transparent 62%);
+            animation: swayBeamLeft 7.5s ease-in-out infinite alternate;
+        }
+        .beam-right {
+            right: -10%;
+            background: conic-gradient(from 200deg at 50% 0%, #2dd4bf, transparent 62%);
+            animation: swayBeamRight 7.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes swayBeamLeft {
+            0% { transform: rotate(-8deg); }
+            100% { transform: rotate(12deg); }
+        }
+        @keyframes swayBeamRight {
+            0% { transform: rotate(8deg); }
+            100% { transform: rotate(-12deg); }
+        }
+
+        /* Chuyển động lắc Chuông Vàng */
+        @keyframes ringGoldenBell {
+            0% { transform: rotate(0deg); }
+            15% { transform: rotate(22deg); }
+            30% { transform: rotate(-20deg); }
+            45% { transform: rotate(15deg); }
+            60% { transform: rotate(-12deg); }
+            75% { transform: rotate(7deg); }
+            90% { transform: rotate(-4deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .bell-ringing {
+            animation: ringGoldenBell 1.2s ease-in-out infinite;
+            transform-origin: top center;
+        }
+        .bell-hover:hover {
+            animation: ringGoldenBell 1s ease-in-out;
+            transform-origin: top center;
+        }
+
+        /* Khung Bảng Con Học Sinh Tiểu Học Việt Nam */
+        .student-slate {
+            background: linear-gradient(155deg, #0d2e47 0%, #071929 100%);
+            border: 8px solid #38bdf8;
+            box-shadow:
+                0 18px 40px rgba(0, 0, 0, 0.55),
+                inset 0 0 28px rgba(56, 189, 248, 0.16),
+                0 0 0 3px #0284c7;
+            position: relative;
+        }
+
+        /* Ô ly mờ trên mặt bảng con */
+        .slate-grid {
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        /* Nút Vàng Sân Khấu nổi 3D */
+        .btn-gold-3d {
+            background: linear-gradient(180deg, #fde047 0%, #eab308 56%, #ca8a04 100%);
+            color: #3b1806;
+            box-shadow: 0 6px 0 #854d0e, 0 10px 22px rgba(234, 179, 8, 0.38);
+            transition: all 0.15s ease;
+        }
+        .btn-gold-3d:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #854d0e, 0 14px 26px rgba(234, 179, 8, 0.52);
+        }
+        .btn-gold-3d:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #854d0e;
+        }
+
+        /* Nút Đáp Án trên Bảng Con */
+        .btn-option {
+            background: linear-gradient(180deg, #16304a 0%, #0c1d2e 100%);
+            border: 2px solid #335c81;
+            box-shadow: 0 5px 0 #040d17;
+            transition: all 0.15s ease;
+        }
+        .btn-option:hover:not(:disabled) {
+            border-color: #fde047;
+            background: linear-gradient(180deg, #1e4266 0%, #102a45 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #040d17, 0 0 16px rgba(250, 204, 21, 0.28);
+        }
+        .btn-option:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #040d17;
+        }
+        .btn-option.correct {
+            background: linear-gradient(180deg, #22c55e 0%, #15803d 100%) !important;
+            border-color: #bbf7d0 !important;
+            color: #ffffff !important;
+            box-shadow: 0 5px 0 #14532d, 0 0 25px rgba(34, 197, 94, 0.65) !important;
+        }
+        .btn-option.wrong {
+            background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%) !important;
+            border-color: #fecaca !important;
+            color: #ffffff !important;
+            box-shadow: 0 5px 0 #7f1d1d !important;
+        }
+
+        /* Hiệu ứng Máy bay giấy cứu trợ bay ngang sân thi đấu */
+        @keyframes flyPaperPlane {
+            0% { transform: translate(-115vw, 35vh) rotate(14deg) scale(0.65); opacity: 0; }
+            18% { opacity: 1; }
+            50% { transform: translate(0vw, -4vh) rotate(-4deg) scale(1.2); opacity: 1; }
+            100% { transform: translate(115vw, -42vh) rotate(-18deg) scale(0.8); opacity: 0; }
+        }
+        .plane-anim {
+            animation: flyPaperPlane 1.85s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+
+        /* Sóng nhạc Equalizer Trường quay TV */
+        @keyframes tvEqBounce {
+            0%, 100% { transform: scaleY(0.28); }
+            50% { transform: scaleY(1); }
+        }
+        .tv-eq-bar {
+            width: 3px;
+            height: 12px;
+            background: #fde047;
+            border-radius: 2px;
+            transform-origin: bottom;
+            animation: tvEqBounce 0.55s ease-in-out infinite;
+        }
+        .tv-eq-paused .tv-eq-bar {
+            animation-play-state: paused;
+            transform: scaleY(0.25);
+            opacity: 0.4;
+        }
+
+        #confettiCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 60;
+        }
+    </style>
+</head>
+<body class="relative flex flex-col items-center justify-between p-2.5 sm:p-5">
+
+    <!-- Ánh sáng sân khấu & Pháo hoa -->
+    <div class="stage-spotlight beam-left"></div>
+    <div class="stage-spotlight beam-right"></div>
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Máy bay giấy cứu trợ bay ngang màn hình -->
+    <div id="paperPlaneOverlay" class="fixed inset-0 pointer-events-none z-50 hidden flex items-center justify-center">
+        <div id="paperPlaneBadge" class="flex items-center gap-3 bg-amber-400 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl border-4 border-white">
+            <i class="fa-solid fa-paper-plane text-2xl sm:text-3xl text-blue-700"></i>
+            <span class="text-base sm:text-xl">Máy Bay Giấy Cứu Trợ Thầy Cô Đã Tới!</span>
+        </div>
+    </div>
+
+    <!-- ================= THANH ĐIỀU HƯỚNG TRƯỜNG QUAY ================= -->
+    <header class="relative z-10 w-full max-w-6xl flex flex-wrap items-center justify-between gap-2.5 bg-slate-950/85 backdrop-blur-md border border-sky-500/35 rounded-2xl px-4 py-2.5 shadow-2xl">
+        <div class="flex items-center gap-3">
+            <!-- Chuông Vàng SVG tương tác -->
+            <div id="headerBell" onclick="ringGoldenBellAudio(true, false)" class="w-11 h-11 flex items-center justify-center bell-hover cursor-pointer" title="Nhấn để nghe tiếng Chuông Vàng ngân vang!">
+                <svg viewBox="0 0 64 64" class="w-10 h-10 drop-shadow-[0_0_10px_rgba(250,204,21,0.85)]">
+                    <defs>
+                        <linearGradient id="goldBellGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#fef08a"/>
+                            <stop offset="45%" stop-color="#facc15"/>
+                            <stop offset="100%" stop-color="#b45309"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="32" cy="9" r="5" fill="#fde047"/>
+                    <path d="M19 48 C19 25, 22 13, 32 13 C42 13, 45 25, 45 48 L53 54 L11 54 Z" fill="url(#goldBellGrad)" stroke="#fef9c3" stroke-width="1.5"/>
+                    <circle cx="32" cy="56" r="6" fill="#ca8a04"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-400 to-teal-300">
+                    RUNG CHUÔNG VÀNG NHÍ • BẢNG CHIA 2, 3, 4, 5
+                </h1>
+                <p class="text-[11px] sm:text-xs text-sky-200/90 font-bold">
+                    Toán Lớp 2 • Khoa Học Tự Nhiên, Văn Hóa Việt & Song Ngữ Anh - Việt (CLIL)
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2">
+            <!-- Bật/Tắt Song ngữ Toán Tiếng Anh (CLIL) -->
+            <button onclick="toggleBilingualMode()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-950/90 border border-sky-400/50 text-sky-200 hover:bg-indigo-900 transition flex items-center gap-1.5" title="Bật/Tắt phụ đề Tiếng Anh Toán học (CLIL)">
+                <i class="fa-solid fa-language text-amber-300 text-sm"></i>
+                <span id="bilingualStatusText">Song ngữ: BẬT</span>
+            </button>
+
+            <!-- Cẩm nang Bảng chia 2, 3, 4, 5 -->
+            <button onclick="toggleStudyModal(true)" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-teal-950/90 border border-teal-400/50 text-amber-200 hover:bg-teal-900 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-book-open-reader"></i>
+                <span class="hidden sm:inline">Bảng Chia 2–5</span>
+            </button>
+
+            <!-- Nhạc nền đếm ngược Trường quay TV -->
+            <button onclick="toggleStudioBGM()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-950/85 border border-amber-400/50 text-amber-200 hover:bg-amber-900 transition flex items-center gap-1.5" title="Bật/Tắt nhạc nền đếm ngược trường quay truyền hình">
+                <span id="tvEqIndicator" class="flex items-end gap-0.5 h-3 tv-eq-paused">
+                    <span class="tv-eq-bar" style="animation-delay:0s"></span>
+                    <span class="tv-eq-bar" style="animation-delay:0.18s"></span>
+                    <span class="tv-eq-bar" style="animation-delay:0.36s"></span>
+                </span>
+                <span id="bgmBtnLabel" class="hidden sm:inline">Nhạc TV: BẬT</span>
+            </button>
+
+            <!-- Bật/Tắt âm thanh tổng -->
+            <button onclick="toggleMasterSound()" class="p-2 px-3 rounded-xl text-sm font-bold bg-slate-900 border border-slate-600 text-amber-300 hover:bg-slate-800 transition" title="Bật/Tắt toàn bộ âm thanh">
+                <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+            </button>
+
+            <!-- Về Sảnh Chờ -->
+            <button id="homeBtn" onclick="returnToLobby()" class="hidden px-3 py-1.5 rounded-xl text-xs font-extrabold bg-rose-950/85 border border-rose-500/60 text-rose-200 hover:bg-rose-900 transition">
+                <i class="fa-solid fa-house mr-1"></i>Đổi Bảng
+            </button>
+        </div>
+    </header>
+
+    <!-- ================= KHU VỰC TRUNG TÂM ================= -->
+    <main class="relative z-10 w-full max-w-6xl flex-1 flex flex-col justify-center my-3">
+
+        <!-- ================= MÀN HÌNH 1: SẢNH CHỜ & CHỌN BẢNG CHIA LỚP 2 ================= -->
+        <section id="lobbyScreen" class="w-full max-w-4xl mx-auto bg-slate-950/85 backdrop-blur-xl border-2 border-amber-400/45 rounded-3xl p-5 sm:p-8 shadow-2xl">
+            <div class="text-center max-w-2xl mx-auto mb-6">
+                <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-extrabold mb-3">
+                    <i class="fa-solid fa-award"></i> SÂN CHƠI TRÍ TUỆ TOÁN LỚP 2
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-black text-white leading-tight mb-2">
+                    Chinh Phục Đỉnh Cao <span class="text-amber-300">Bảng Chia 2, 3, 4, 5</span>
+                </h2>
+                <p class="text-slate-300 text-xs sm:text-base leading-relaxed">
+                    Vượt qua <strong class="text-amber-300">20 nấc thang</strong> sinh động từ <em>mối liên hệ Nhân – Chia, Số bị chia – Số chia – Thương</em>, đơn vị đo lường đến thiên nhiên và văn hóa Việt Nam để ngân vang tiếng Chuông Vàng!
+                </p>
+            </div>
+
+            <!-- Bước 1: Chọn Bảng Chia muốn thử thách -->
+            <div class="mb-6">
+                <label class="block text-center text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-300 mb-3">
+                    1. Chọn Bảng Chia Thi Đấu (Có thể chọn 1 hoặc nhiều bảng)
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 max-w-4xl mx-auto">
+                    <button onclick="toggleDivTable(2)" id="divBtn-2" class="py-3 px-2.5 rounded-2xl font-black text-base border-2 transition flex flex-col items-center">
+                        <span>🥢 Chia 2</span>
+                        <span class="text-[11px] font-semibold opacity-85">2 : 2 → 20 : 2</span>
+                    </button>
+                    <button onclick="toggleDivTable(3)" id="divBtn-3" class="py-3 px-2.5 rounded-2xl font-black text-base border-2 transition flex flex-col items-center">
+                        <span>🍀 Chia 3</span>
+                        <span class="text-[11px] font-semibold opacity-85">3 : 3 → 30 : 3</span>
+                    </button>
+                    <button onclick="toggleDivTable(4)" id="divBtn-4" class="py-3 px-2.5 rounded-2xl font-black text-base border-2 transition flex flex-col items-center">
+                        <span>🐱 Chia 4</span>
+                        <span class="text-[11px] font-semibold opacity-85">4 : 4 → 40 : 4</span>
+                    </button>
+                    <button onclick="toggleDivTable(5)" id="divBtn-5" class="py-3 px-2.5 rounded-2xl font-black text-base border-2 transition flex flex-col items-center">
+                        <span>⭐ Chia 5</span>
+                        <span class="text-[11px] font-semibold opacity-85">5 : 5 → 50 : 5</span>
+                    </button>
+                    <button onclick="selectCoreGrade2Tables()" class="py-3 px-2.5 rounded-2xl font-extrabold text-xs border-2 border-emerald-400/60 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 transition flex flex-col items-center justify-center" title="Chọn nhanh Bảng chia 2 và 5 trọng tâm SGK Toán Lớp 2 (GDPT 2018)">
+                        <i class="fa-solid fa-check-double mb-1 text-amber-300"></i>
+                        <span>Trọng Tâm 2 & 5</span>
+                    </button>
+                    <button onclick="selectAllDivTables()" class="py-3 px-2.5 rounded-2xl font-extrabold text-xs border-2 border-sky-400/60 bg-sky-500/20 text-sky-200 hover:bg-sky-500/30 transition flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-layer-group mb-1 text-amber-300"></i>
+                        <span>Đủ Bảng 2–5</span>
+                    </button>
+                </div>
+                <p id="tableWarning" class="hidden text-center text-rose-400 text-xs font-bold mt-2">
+                    * Bé hãy chọn ít nhất 1 bảng chia trước khi bước lên sàn thi đấu nhé!
+                </p>
+            </div>
+
+            <!-- Bước 2: Chọn Chế Độ Bảng Con Học Sinh -->
+            <div class="mb-6 max-w-3xl mx-auto">
+                <label class="block text-center text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-300 mb-3">
+                    2. Chọn Hình Thức Giơ Bảng Con Học Sinh
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button onclick="selectGameMode('mixed')" id="modeCard-mixed" class="p-3.5 rounded-2xl border-2 text-left transition">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-black text-amber-300 text-sm"><i class="fa-solid fa-star mr-1"></i>Chuẩn Sân Khấu</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black">Khuyên dùng</span>
+                        </div>
+                        <p class="text-xs text-slate-300">Câu 1–14 chọn nhanh A, B, C, D; Câu 15–20 tự viết thương lên bảng con hồi hộp!</p>
+                    </button>
+
+                    <button onclick="selectGameMode('mcq')" id="modeCard-mcq" class="p-3.5 rounded-2xl border-2 text-left transition">
+                        <div class="font-black text-sky-300 text-sm mb-1"><i class="fa-solid fa-list-check mr-1.5"></i>Trắc Nghiệm 100%</div>
+                        <p class="text-xs text-slate-300">Chọn 1 trong 4 đáp án A, B, C, D xuyên suốt cả 20 câu hỏi trên lớp.</p>
+                    </button>
+
+                    <button onclick="selectGameMode('slate')" id="modeCard-slate" class="p-3.5 rounded-2xl border-2 text-left transition">
+                        <div class="font-black text-emerald-300 text-sm mb-1"><i class="fa-solid fa-chalkboard-user mr-1.5"></i>Tự Viết Bảng Con</div>
+                        <p class="text-xs text-slate-300">Không hiện đáp án sẵn. Bé tự bấm số viết thương lên bảng con cả 20 câu.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Nhập tên thí sinh & Lên sàn đấu -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
+                <div class="relative w-full sm:w-2/3">
+                    <i class="fa-solid fa-child-reaching absolute left-4 top-1/2 -translate-y-1/2 text-sky-400 text-lg"></i>
+                    <input id="playerNameInput" type="text" maxlength="24" placeholder="Nhập tên thí sinh nhí (VD: Minh Anh 2A)..."
+                        class="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-amber-400 focus:outline-none text-white font-bold placeholder-slate-400">
+                </div>
+                <button onclick="startGoldenBellArena()" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-base sm:text-lg btn-gold-3d flex items-center justify-center gap-2 whitespace-nowrap">
+                    <span>LÊN SÀN ĐẤU</span>
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+            </div>
+
+            <!-- Nút mở Cẩm nang Ôn nhanh -->
+            <div class="mt-5 pt-4 border-t border-slate-800 text-center">
+                <button onclick="toggleStudyModal(true)" class="text-xs sm:text-sm font-extrabold text-sky-300 hover:text-sky-200 underline underline-offset-4 inline-flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> Mở Cẩm Nang Bảng Chia 2, 3, 4, 5 & Bí Kíp "Nhẩm Ngược Bảng Nhân"
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= MÀN HÌNH 2: SÀN THI ĐẤU RUNG CHUÔNG VÀNG ================= -->
+        <section id="arenaScreen" class="hidden w-full flex flex-col gap-3.5">
+
+            <!-- Thanh Tiến Trình 20 Bậc Thang Tới Chuông Vàng -->
+            <div class="bg-slate-950/90 border border-slate-700/80 rounded-2xl p-3 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs sm:text-sm">
+                    <div class="flex items-center flex-wrap gap-2">
+                        <span class="px-3 py-1 rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-200 font-black">
+                            <i class="fa-solid fa-id-badge text-amber-300 mr-1"></i><span id="arenaPlayerName">Thí sinh Lớp 2</span>
+                        </span>
+                        <span id="stageBadgeLabel" class="px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 font-extrabold">
+                            Chặng 1 • Khởi Động Bảng Chia
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-4 font-black">
+                        <span class="text-orange-400" title="Chuỗi trả lời đúng liên tiếp">
+                            <i class="fa-solid fa-fire mr-1"></i>Chuỗi: <span id="streakCount">0</span>
+                        </span>
+                        <span class="text-amber-300">
+                            <i class="fa-solid fa-star mr-1"></i>Điểm: <span id="scoreCount">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 20 nấc thang -->
+                <div id="ladderGrid" class="grid grid-cols-10 sm:grid-cols-20 gap-1"></div>
+            </div>
+
+            <!-- KHUNG SÂN KHẤU CHÍNH: ĐỒNG HỒ & GÓC THẦY CÔ (TRÁI) + BẢNG CON HỌC SINH (PHẢI) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+                <!-- Cột Trái (3 phần): Đồng hồ đếm ngược + Góc Cô Giáo Song ngữ CLIL -->
+                <div class="lg:col-span-3 flex flex-col justify-between gap-3 bg-slate-950/85 border border-slate-700/80 rounded-3xl p-4">
+                    <div class="flex sm:flex-row lg:flex-col items-center justify-around gap-3 my-auto">
+                        <!-- Đồng hồ vòng tròn -->
+                        <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center shrink-0">
+                            <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="42" stroke="#1e293b" stroke-width="9" fill="none"/>
+                                <circle id="timerCircle" cx="50" cy="50" r="42" stroke="#22c55e" stroke-width="9" fill="none"
+                                    stroke-dasharray="264" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-300"/>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="timerNumber" class="text-2xl sm:text-3xl font-black text-white">22</span>
+                                <span class="text-[10px] uppercase font-bold text-slate-400">Giây</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nấc thang hiện tại</div>
+                            <div class="text-xl sm:text-2xl font-black text-amber-300">
+                                Câu <span id="currentStepText">1</span><span class="text-slate-500 text-base">/20</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Góc Cố Vấn Sư Phạm & Tiếng Anh Toán Học Lớp 2 (CLIL) -->
+                    <div class="bg-indigo-950/75 border border-indigo-400/35 rounded-2xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-chalkboard-user"></i> Cô Giáo Song Ngữ
+                            </span>
+                            <button onclick="speakCurrentMathEnglish()" class="px-2 py-1 rounded-lg bg-sky-500/25 hover:bg-sky-500/40 border border-sky-400/50 text-sky-100 text-[11px] font-extrabold transition flex items-center gap-1" title="Nghe cô giáo Tiếng Anh đọc phép chia">
+                                <i class="fa-solid fa-volume-high text-amber-300"></i> Nghe Anh
+                            </button>
+                        </div>
+                        <p id="teacherMsgVi" class="text-xs sm:text-sm font-bold text-white leading-snug">
+                            Nhẩm ngược bảng nhân là tìm ra thương cực nhanh luôn nhé!
+                        </p>
+                        <p id="teacherMsgEn" class="text-xs font-semibold text-sky-300 italic leading-snug">
+                            "Think of the multiplication table in reverse! You can do it!"
+                        </p>
+                    </div>
+
+                    <!-- Phao cứu trợ hồi sinh sân đấu -->
+                    <div class="bg-slate-900/90 border border-slate-700 rounded-2xl px-3 py-2 flex items-center justify-between text-xs">
+                        <span class="text-slate-300 font-bold"><i class="fa-solid fa-life-ring text-orange-400 mr-1.5"></i>Phao Cứu Trợ Sân Đấu:</span>
+                        <span id="stageShieldBadge" class="font-black text-emerald-400">Còn 1 lần</span>
+                    </div>
+                </div>
+
+                <!-- Cột Phải (9 phần): BẢNG CON HỌC SINH & QUYỀN TRỢ GIÚP -->
+                <div class="lg:col-span-9 flex flex-col justify-between gap-3.5">
+
+                    <div class="student-slate slate-grid rounded-3xl p-5 sm:p-7 flex-1 flex flex-col justify-between">
+                        <!-- Thanh tiêu đề góc trên Bảng con -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-sky-400/20 pb-2.5 mb-3">
+                            <span id="tableScopeTag" class="px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-200 text-xs font-extrabold">
+                                Bảng chia: 2, 3, 4, 5
+                            </span>
+                            <span id="inputMethodTag" class="text-xs font-bold text-slate-300">
+                                <i class="fa-solid fa-pen-nib text-amber-300 mr-1"></i>Bảng con học sinh Lớp 2
+                            </span>
+                        </div>
+
+                        <!-- Vùng Hiển Thị Câu Hỏi Toán & Phụ Đề Tiếng Anh CLIL -->
+                        <div class="my-auto py-3 text-center">
+                            <div id="questionMainVi" class="text-2xl sm:text-4xl font-black text-white tracking-wide leading-snug drop-shadow">
+                                30 : 5 = ?
+                            </div>
+
+                            <!-- Dòng Tiếng Anh Toán Học Lớp 2 (Đối chiếu dấu : và ÷) -->
+                            <div id="questionMainEn" class="mt-2.5 inline-flex items-center gap-2 px-3.5 py-1 rounded-xl bg-blue-950/80 border border-sky-400/35 text-xs sm:text-base font-bold text-amber-200 italic">
+                                🇬🇧 Math English (30 ÷ 5): What is thirty divided by five?
+                            </div>
+
+                            <!-- Hộp Thư Gợi Ý Tư Duy Từ Máy Bay Giấy -->
+                            <div id="hintBannerBox" class="hidden mt-4 mx-auto max-w-2xl px-4 py-2.5 rounded-2xl bg-amber-400/15 border border-amber-300/60 text-amber-200 text-xs sm:text-sm font-bold leading-relaxed">
+                            </div>
+                        </div>
+
+                        <!-- KHU VỰC TRẢ LỜI 1: 4 ĐÁP ÁN TRẮC NGHIỆM (A, B, C, D) -->
+                        <div id="mcqOptionsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4"></div>
+
+                        <!-- KHU VỰC TRẢ LỜI 2: TỰ VIẾT SỐ LÊN BẢNG CON -->
+                        <div id="slateKeypadArea" class="hidden mt-4 flex flex-col items-center gap-3">
+                            <div class="flex items-center justify-center gap-3 w-full max-w-md">
+                                <div class="flex-1 bg-slate-950/90 border-2 border-sky-400 rounded-2xl py-2.5 px-4 text-center">
+                                    <span class="text-xs text-slate-400 block font-bold">Số viết trên bảng con của bé:</span>
+                                    <div class="flex items-baseline justify-center gap-1.5">
+                                        <span id="slateValueText" class="text-3xl font-black text-amber-300 tracking-widest min-h-[36px] inline-block">?</span>
+                                        <span id="slateUnitSuffix" class="text-base font-extrabold text-sky-300"></span>
+                                    </div>
+                                </div>
+                                <button onclick="submitSlateNumber()" class="px-6 py-4 rounded-2xl font-black text-base sm:text-lg btn-gold-3d whitespace-nowrap">
+                                    GIƠ BẢNG <i class="fa-solid fa-hand-sparkles ml-1"></i>
+                                </button>
+                            </div>
+
+                            <!-- Bàn phím số cảm ứng cỡ lớn dễ bấm cho học sinh Lớp 2 -->
+                            <div class="grid grid-cols-6 sm:grid-cols-11 gap-1.5 w-full max-w-xl">
+                                <button onclick="typeDigit('1')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">1</button>
+                                <button onclick="typeDigit('2')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">2</button>
+                                <button onclick="typeDigit('3')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">3</button>
+                                <button onclick="typeDigit('4')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">4</button>
+                                <button onclick="typeDigit('5')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">5</button>
+                                <button onclick="typeDigit('6')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">6</button>
+                                <button onclick="typeDigit('7')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">7</button>
+                                <button onclick="typeDigit('8')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">8</button>
+                                <button onclick="typeDigit('9')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">9</button>
+                                <button onclick="typeDigit('0')" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-black text-lg">0</button>
+                                <button onclick="clearSlateDigits()" class="col-span-2 sm:col-span-1 py-2.5 rounded-xl bg-rose-900/80 hover:bg-rose-800 border border-rose-500/60 font-black text-sm text-rose-200" title="Lau bảng con">
+                                    <i class="fa-solid fa-eraser"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- THANH 3 QUYỀN CỨU TRỢ CHỦ ĐỘNG TRÊN BẢNG CON -->
+                    <div class="bg-slate-950/90 border border-slate-700/80 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2">
+                        <span class="text-xs sm:text-sm font-extrabold text-amber-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane"></i> Quyền Cứu Trợ Sàn Đấu:
+                        </span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="btnPlaneHelp" onclick="usePaperPlaneLifeline()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-sky-600/30 border border-sky-400 text-sky-100 hover:bg-sky-600/50 transition flex items-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-paper-plane text-amber-300"></i>
+                                <span>Máy Bay Giấy Thầy Cô</span>
+                            </button>
+
+                            <button id="btnTimeHelp" onclick="useExtraTimeLifeline()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600/30 border border-emerald-400 text-emerald-100 hover:bg-emerald-600/50 transition flex items-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-hourglass-half text-amber-300"></i>
+                                <span>+15 Giây Suy Nghĩ</span>
+                            </button>
+
+                            <button id="btnSwapHelp" onclick="useSwapQuestionLifeline()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-purple-600/30 border border-purple-400 text-purple-100 hover:bg-purple-600/50 transition flex items-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-rotate text-amber-300"></i>
+                                <span>Đổi Câu Hỏi Khác</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MÀN HÌNH 3: ĐĂNG QUANG RUNG CHUÔNG VÀNG LỚP 2 ================= -->
+        <section id="resultScreen" class="hidden w-full max-w-3xl mx-auto bg-slate-950/90 backdrop-blur-xl border-2 border-amber-400/65 rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
+            <div onclick="ringGoldenBellAudio(false, true)" class="mx-auto w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center cursor-pointer mb-3" title="Chạm vào Chuông Vàng để ngân vang chiến thắng!">
+                <svg id="grandBellSvg" viewBox="0 0 64 64" class="w-full h-full drop-shadow-[0_0_28px_rgba(250,204,21,0.85)]">
+                    <circle cx="32" cy="8" r="5" fill="#fde047"/>
+                    <path d="M18 48 C18 24, 21 12, 32 12 C43 12, 46 24, 46 48 L55 55 L9 55 Z" fill="url(#goldBellGrad)" stroke="#fef9c3" stroke-width="1.5"/>
+                    <circle cx="32" cy="57" r="6" fill="#ca8a04"/>
+                </svg>
+            </div>
+
+            <div id="resultLaurelTag" class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-400/20 border border-amber-300 text-amber-300 text-xs sm:text-sm font-black mb-2">
+                👑 VÒNG NGUYỆT QUẾ RUNG CHUÔNG VÀNG LỚP 2
+            </div>
+
+            <h2 id="resultMainTitle" class="text-2xl sm:text-4xl font-black text-white mb-2">
+                HOAN HÔ QUÁN QUÂN ĐÃ RUNG CHUÔNG VÀNG!
+            </h2>
+            <p id="resultSubTitle" class="text-slate-300 text-sm sm:text-base mb-6"></p>
+
+            <div class="grid grid-cols-3 gap-3 max-w-lg mx-auto mb-6">
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl p-3.5">
+                    <div class="text-xs text-slate-400 font-bold">Mốc Đạt Được</div>
+                    <div id="finalStepStat" class="text-xl sm:text-2xl font-black text-amber-400">20/20</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl p-3.5">
+                    <div class="text-xs text-slate-400 font-bold">Tổng Điểm</div>
+                    <div id="finalScoreStat" class="text-xl sm:text-2xl font-black text-emerald-400">200</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl p-3.5">
+                    <div class="text-xs text-slate-400 font-bold">Chuỗi Đúng Max</div>
+                    <div id="finalStreakStat" class="text-xl sm:text-2xl font-black text-sky-400">20</div>
+                </div>
+            </div>
+
+            <!-- Góc dặn dò yêu thương nếu dừng bước -->
+            <div id="reviewNoteCard" class="hidden text-left bg-blue-950/70 border border-sky-400/45 rounded-2xl p-4 max-w-xl mx-auto mb-6">
+                <div class="text-xs sm:text-sm font-black text-amber-300 mb-1">
+                    <i class="fa-solid fa-lightbulb mr-1"></i>Lời Dặn Dò Yêu Thương Từ Thầy Cô:
+                </div>
+                <p id="reviewNoteText" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></p>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <button onclick="startGoldenBellArena()" class="px-8 py-3.5 rounded-2xl font-black text-base sm:text-lg btn-gold-3d flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> THI ĐẤU LẠI
+                </button>
+                <button onclick="returnToLobby()" class="px-6 py-3.5 rounded-2xl font-extrabold text-sm sm:text-base bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white transition">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Đổi Bảng Chia
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= CÁC HỘP THOẠI CỨU TRỢ & CẨM NANG (KHÔNG DÙNG ALERT) ================= -->
+
+    <!-- 1. Modal Phao Cứu Trợ Sân Đấu (Khi học sinh lỡ sai 1 câu trên đường tới Chuông Vàng) -->
+    <div id="stageRescueModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+            <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-amber-400/20 border-2 border-amber-300 flex items-center justify-center text-3xl">
+                ✈️
+            </div>
+            <h3 class="text-xl font-black text-amber-300 mb-2">Khoan Đã! Thầy Cô Tung Bóng Cứu Trợ!</h3>
+            <div id="stageRescueExplain" class="bg-slate-950 border border-slate-700 rounded-2xl p-3.5 text-xs sm:text-sm text-slate-200 mb-4 leading-relaxed text-left"></div>
+            <p class="text-xs font-bold text-sky-300 mb-5">
+                Em được dùng <strong class="underline">1 quyền Cứu Trợ Duy Nhất</strong> để ở lại sàn thi đấu và tiến thẳng tới Chuông Vàng!
+            </p>
+            <button onclick="acceptStageRescue()" class="w-full py-3.5 rounded-2xl font-black text-sm sm:text-base btn-gold-3d">
+                NHẬN CỨU TRỢ & ĐI TIẾP!
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. Modal Cẩm Nang Bảng Chia 2, 3, 4, 5 & Bí Kíp Nhẩm Ngược + Tiếng Anh CLIL Lớp 2 -->
+    <div id="studyModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
+        <div class="bg-slate-900 border-2 border-amber-400/55 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-5 sm:p-7 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3 mb-4">
+                <div>
+                    <h3 class="text-lg sm:text-2xl font-black text-amber-300">
+                        <i class="fa-solid fa-graduation-cap mr-2"></i>Cẩm Nang Bảng Chia 2, 3, 4, 5 & Bí Kíp Toán Lớp 2
+                    </h3>
+                    <p class="text-xs text-slate-300">Ôn tập nhanh 2 phút trước khi bước lên sàn thi đấu Rung Chuông Vàng!</p>
+                </div>
+                <button onclick="toggleStudyModal(false)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-rose-600 text-white font-bold transition">✕</button>
+            </div>
+
+            <!-- 4 Bảng Chia -->
+            <div id="studyDivGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5"></div>
+
+            <!-- Bí kíp sư phạm Lớp 2 & Góc Tiếng Anh CLIL -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs sm:text-sm">
+                <div class="bg-teal-950/60 border border-teal-400/40 rounded-2xl p-4 space-y-1.5 text-slate-200">
+                    <div class="font-black text-amber-300">💡 Bí Kíp Vàng Toán Lớp 2 Cần Nhớ:</div>
+                    <p>• <strong>Nhẩm ngược từ phép nhân:</strong> Muốn tính <strong>28 : 4 = ?</strong>, em hãy nhẩm <em>"4 nhân mấy bằng 28?"</em> → Vì <strong>4 × 7 = 28</strong> nên <strong>28 : 4 = 7</strong>!</p>
+                    <p>• <strong>Tên gọi thành phần:</strong> Trong phép chia <strong>15 : 5 = 3</strong>, số <strong>15</strong> là <em>Số bị chia</em>, số <strong>5</strong> là <em>Số chia</em>, kết quả <strong>3</strong> gọi là <em>Thương</em> (và <strong>15 : 5</strong> cũng gọi là một thương).</p>
+                    <p>• <strong>Mẹo kiểm tra Bảng chia 5:</strong> Mọi Số bị chia trong bảng chia 5 đều tận cùng là chữ số <strong>0</strong> hoặc <strong>5</strong>!</p>
+                </div>
+
+                <div class="bg-indigo-950/60 border border-indigo-400/40 rounded-2xl p-4 space-y-1.5 text-slate-200">
+                    <div class="font-black text-sky-300">🇬🇧 Góc Tiếng Anh Toán Lớp 2 (CLIL Starters):</div>
+                    <p>• Ở Việt Nam dấu chia viết là hai chấm <strong>(:)</strong>, còn sách Tiếng Anh quốc tế viết là <strong>(÷)</strong> — đọc là <strong>"divided by"</strong>.</p>
+                    <p>• <strong>Ví dụ:</strong> <strong class="text-amber-300">20 : 5 = 4</strong> đọc là <em>"Twenty divided by five equals four!"</em></p>
+                    <p>• <strong>Từ vựng vàng:</strong> <em>Dividend</em> (Số bị chia) • <em>Divisor</em> (Số chia) • <em>Quotient</em> (Thương) • <em>Share equally</em> (Chia đều).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="relative z-10 text-center text-[11px] sm:text-xs text-slate-400 py-1">
+        Rung Chuông Vàng Nhí • Bảng Chia 2, 3, 4, 5 (Toán Lớp 2) • Tích hợp Khoa học Tự nhiên, Văn hóa Việt & CLIL English
+    </footer>
+
+    <script>
+        /* =========================================================================
+           1. HỆ THỐNG ÂM THANH GAMESHOW TRUYỀN HÌNH RUNG CHUÔNG VÀNG (TV STUDIO DSP)
+              - Tích hợp: Master Compressor, Arena Hall Reverb/Echo, Kèn đồng khai cuộc,
+                Tiếng vỗ tay khán giả trường quay, Nhạc đếm ngược 120 BPM tự tăng tốc
+                ở 5 giây cuối, Tiếng Cồng "Hết Giờ Giơ Bảng!", Gió bay Máy bay giấy
+                và Đại Hồng Chung - Chuông Vàng 8 họa âm đồng thau vật lý.
+           ========================================================================= */
+        let audioCtx = null;
+        let masterBus = null;
+        let hallEchoBus = null;
+        let noiseBuffer = null;
+
+        let soundEnabled = true;
+        let studioBgmOn = true;
+        let bgmInterval = null;
+        let bgmBeat = 0;
+
+        function midiToHz(midi) {
+            return 440 * Math.pow(2, (midi - 69) / 12);
+        }
+
+        function ensureAudio() {
+            if (!audioCtx) {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (Ctx) {
+                    audioCtx = new Ctx();
+
+                    // Bộ nén tín hiệu chuẩn truyền hình tránh vỡ âm
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    compressor.threshold.setValueAtTime(-16, audioCtx.currentTime);
+                    compressor.knee.setValueAtTime(24, audioCtx.currentTime);
+                    compressor.ratio.setValueAtTime(6, audioCtx.currentTime);
+                    compressor.attack.setValueAtTime(0.005, audioCtx.currentTime);
+                    compressor.release.setValueAtTime(0.2, audioCtx.currentTime);
+                    compressor.connect(audioCtx.destination);
+
+                    masterBus = audioCtx.createGain();
+                    masterBus.gain.value = 0.88;
+                    masterBus.connect(compressor);
+
+                    // Không gian vang nhà thi đấu lớn (Arena Hall Echo)
+                    const delay = audioCtx.createDelay(1.0);
+                    delay.delayTime.value = 0.19;
+                    const fb = audioCtx.createGain();
+                    fb.gain.value = 0.3;
+                    const lp = audioCtx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.value = 2800;
+
+                    hallEchoBus = audioCtx.createGain();
+                    hallEchoBus.gain.value = 0.34;
+                    hallEchoBus.connect(delay);
+                    delay.connect(lp);
+                    lp.connect(fb);
+                    fb.connect(delay);
+                    lp.connect(masterBus);
+
+                    // White Noise phục vụ tiếng vỗ tay khán giả & gió lướt máy bay giấy
+                    const sr = audioCtx.sampleRate;
+                    noiseBuffer = audioCtx.createBuffer(1, sr * 2, sr);
+                    const ch = noiseBuffer.getChannelData(0);
+                    for (let i = 0; i < ch.length; i++) {
+                        ch[i] = Math.random() * 2 - 1;
+                    }
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function updateEqVisual(active) {
+            const eq = document.getElementById('tvEqIndicator');
+            if (!eq) return;
+            if (active && soundEnabled && studioBgmOn) eq.classList.remove('tv-eq-paused');
+            else eq.classList.add('tv-eq-paused');
+        }
+
+        function toggleMasterSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundIcon').className = soundEnabled
+                ? 'fa-solid fa-volume-high'
+                : 'fa-solid fa-volume-xmark text-slate-500';
+            if (!soundEnabled) {
+                stopArenaBGM();
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            } else {
+                playClickPop(660);
+                if (!document.getElementById('arenaScreen').classList.contains('hidden') && canAnswer) {
+                    startArenaBGM();
+                }
+            }
+        }
+
+        function toggleStudioBGM() {
+            studioBgmOn = !studioBgmOn;
+            document.getElementById('bgmBtnLabel').textContent = studioBgmOn ? 'Nhạc TV: BẬT' : 'Nhạc TV: TẮT';
+            if (!studioBgmOn) {
+                stopArenaBGM();
+            } else {
+                playClickPop(640);
+                if (!document.getElementById('arenaScreen').classList.contains('hidden') && canAnswer) {
+                    startArenaBGM();
+                }
+            }
+        }
+
+        function playClickPop(freq = 620) {
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+            osc.frequency.exponentialRampToValueAtTime(freq * 1.35, now + 0.06);
+            g.gain.setValueAtTime(0.11, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+            osc.connect(g);
+            g.connect(masterBus);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        }
+
+        // Tiếng vỗ tay khán giả trường quay tổng hợp tự nhiên
+        function playStudioApplause(duration = 1.3, peak = 0.11) {
+            if (!soundEnabled || !audioCtx || !noiseBuffer) return;
+            const now = audioCtx.currentTime;
+            const claps = Math.floor(duration * 16);
+            for (let i = 0; i < claps; i++) {
+                const src = audioCtx.createBufferSource();
+                src.buffer = noiseBuffer;
+                const bp = audioCtx.createBiquadFilter();
+                bp.type = 'bandpass';
+                bp.frequency.value = 1100 + Math.random() * 1400;
+                bp.Q.value = 1.4;
+
+                const g = audioCtx.createGain();
+                const t = now + (i / claps) * duration + Math.random() * 0.03;
+                const amp = peak * (1 - (i / claps) * 0.55);
+                g.gain.setValueAtTime(0.0005, t);
+                g.gain.linearRampToValueAtTime(amp, t + 0.012);
+                g.gain.exponentialRampToValueAtTime(0.0005, t + 0.085);
+
+                src.connect(bp);
+                bp.connect(g);
+                g.connect(masterBus);
+                src.start(t, Math.random() * 0.8, 0.1);
+            }
+        }
+
+        // Nhạc hiệu Kèn đồng Khai cuộc Sàn Thi Đấu Rung Chuông Vàng
+        function playOpeningFanfare() {
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            const brassNotes = [
+                { m: 62, t: 0.00, d: 0.14 },
+                { m: 66, t: 0.14, d: 0.14 },
+                { m: 69, t: 0.28, d: 0.14 },
+                { m: 74, t: 0.42, d: 0.30 },
+                { m: 69, t: 0.74, d: 0.16 },
+                { m: 74, t: 0.92, d: 0.62 }
+            ];
+            brassNotes.forEach(n => {
+                [0, -12].forEach((oct, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const flt = audioCtx.createBiquadFilter();
+                    const g = audioCtx.createGain();
+                    const s = now + n.t;
+
+                    osc.type = idx === 0 ? 'sawtooth' : 'triangle';
+                    osc.frequency.setValueAtTime(midiToHz(n.m + oct), s);
+                    flt.type = 'lowpass';
+                    flt.frequency.setValueAtTime(3100, s);
+                    flt.frequency.exponentialRampToValueAtTime(1100, s + n.d);
+
+                    g.gain.setValueAtTime(0.001, s);
+                    g.gain.linearRampToValueAtTime(idx === 0 ? 0.13 : 0.085, s + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.001, s + n.d + 0.04);
+
+                    osc.connect(flt);
+                    flt.connect(g);
+                    g.connect(masterBus);
+                    g.connect(hallEchoBus);
+                    osc.start(s);
+                    osc.stop(s + n.d + 0.05);
+                });
+            });
+            playStudioApplause(1.2, 0.09);
+        }
+
+        // Nhạc nền đếm ngược sôi động kiểu Gameshow TV (tự động đẩy cao trào khi còn <= 5 giây)
+        function stopArenaBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+            updateEqVisual(false);
+        }
+
+        function startArenaBGM() {
+            stopArenaBGM();
+            if (!soundEnabled || !studioBgmOn) return;
+            ensureAudio();
+            if (!audioCtx) return;
+
+            bgmBeat = 0;
+            updateEqVisual(true);
+
+            const bassNotes = [50, 50, 57, 50, 53, 55, 57, 55];
+            const marimbaNotes = [62, 69, 74, 69, 65, 69, 72, 69];
+
+            bgmInterval = setInterval(() => {
+                if (!soundEnabled || !studioBgmOn || !canAnswer || !audioCtx) return;
+                const now = audioCtx.currentTime;
+                const step = bgmBeat % 8;
+                const urgent = (timeLeft <= 5);
+                const shift = urgent ? 2 : 0;
+
+                if (step % 2 === 0 || urgent) {
+                    const bOsc = audioCtx.createOscillator();
+                    const bFlt = audioCtx.createBiquadFilter();
+                    const bGain = audioCtx.createGain();
+                    bOsc.type = 'sawtooth';
+                    bOsc.frequency.setValueAtTime(midiToHz(bassNotes[step] + shift - 12), now);
+                    bFlt.type = 'lowpass';
+                    bFlt.frequency.setValueAtTime(urgent ? 920 : 640, now);
+                    bFlt.frequency.exponentialRampToValueAtTime(180, now + 0.16);
+                    bGain.gain.setValueAtTime(urgent ? 0.072 : 0.052, now);
+                    bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    bOsc.connect(bFlt);
+                    bFlt.connect(bGain);
+                    bGain.connect(masterBus);
+                    bOsc.start(now);
+                    bOsc.stop(now + 0.19);
+                }
+
+                const mOsc = audioCtx.createOscillator();
+                const mGain = audioCtx.createGain();
+                mOsc.type = 'sine';
+                mOsc.frequency.setValueAtTime(midiToHz(marimbaNotes[step] + shift), now);
+                mGain.gain.setValueAtTime(urgent ? 0.062 : 0.04, now);
+                mGain.gain.exponentialRampToValueAtTime(0.0008, now + 0.12);
+                mOsc.connect(mGain);
+                mGain.connect(masterBus);
+                if (step % 4 === 0) mGain.connect(hallEchoBus);
+                mOsc.start(now);
+                mOsc.stop(now + 0.13);
+
+                bgmBeat++;
+            }, 240);
+        }
+
+        function playFinalSecondsBeep(urgent = false) {
+            if (!soundEnabled || !audioCtx) return;
+            if (!urgent && studioBgmOn) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = urgent ? 'square' : 'triangle';
+            osc.frequency.setValueAtTime(urgent ? (timeLeft === 1 ? 1174.66 : 880) : 540, now);
+            g.gain.setValueAtTime(urgent ? 0.09 : 0.035, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + (urgent ? 0.1 : 0.05));
+            osc.connect(g);
+            g.connect(masterBus);
+            osc.start(now);
+            osc.stop(now + 0.11);
+        }
+
+        // Tiếng Cồng Đồng "Hết Giờ - Giơ Bảng!"
+        function playTimeUpGong() {
+            stopArenaBGM();
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            [220, 330, 466.16, 622.25].forEach((fr, idx) => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = idx === 0 ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(fr, now);
+                osc.frequency.exponentialRampToValueAtTime(fr * 0.96, now + 0.9);
+                g.gain.setValueAtTime(0.16 / (idx + 1), now);
+                g.gain.exponentialRampToValueAtTime(0.0008, now + 0.95);
+                osc.connect(g);
+                g.connect(masterBus);
+                g.connect(hallEchoBus);
+                osc.start(now);
+                osc.stop(now + 1.0);
+            });
+        }
+
+        // Nhạc Trả lời đúng + Tiếng vỗ tay reo hò
+        function playCorrectShowSound() {
+            stopArenaBGM();
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            [
+                { m: 60, t: 0.00, d: 0.10 },
+                { m: 64, t: 0.09, d: 0.10 },
+                { m: 67, t: 0.18, d: 0.10 },
+                { m: 72, t: 0.27, d: 0.45 }
+            ].forEach(n => {
+                const osc = audioCtx.createOscillator();
+                const flt = audioCtx.createBiquadFilter();
+                const g = audioCtx.createGain();
+                const s = now + n.t;
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(midiToHz(n.m), s);
+                flt.type = 'lowpass';
+                flt.frequency.setValueAtTime(3000, s);
+                flt.frequency.exponentialRampToValueAtTime(1200, s + n.d);
+                g.gain.setValueAtTime(0.14, s);
+                g.gain.exponentialRampToValueAtTime(0.001, s + n.d);
+                osc.connect(flt);
+                flt.connect(g);
+                g.connect(masterBus);
+                g.connect(hallEchoBus);
+                osc.start(s);
+                osc.stop(s + n.d + 0.03);
+            });
+            playStudioApplause(1.1, 0.1);
+        }
+
+        // Nhạc Trả lời sai kiểu kèn đồng tiếc nuối truyền hình
+        function playWrongShowSound() {
+            stopArenaBGM();
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            [
+                { f1: 311.13, f2: 293.66, t: 0.00, d: 0.23 },
+                { f1: 277.18, f2: 196.00, t: 0.25, d: 0.56 }
+            ].forEach(item => {
+                const osc = audioCtx.createOscillator();
+                const flt = audioCtx.createBiquadFilter();
+                const g = audioCtx.createGain();
+                const s = now + item.t;
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(item.f1, s);
+                osc.frequency.exponentialRampToValueAtTime(item.f2, s + item.d);
+                flt.type = 'lowpass';
+                flt.frequency.setValueAtTime(1100, s);
+                flt.frequency.exponentialRampToValueAtTime(320, s + item.d);
+                g.gain.setValueAtTime(0.16, s);
+                g.gain.exponentialRampToValueAtTime(0.001, s + item.d + 0.04);
+                osc.connect(flt);
+                flt.connect(g);
+                g.connect(masterBus);
+                g.connect(hallEchoBus);
+                osc.start(s);
+                osc.stop(s + item.d + 0.06);
+            });
+        }
+
+        // Âm thanh Máy bay giấy cứu trợ bay vút ngang sân khấu
+        function playPaperPlaneSound() {
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            if (noiseBuffer) {
+                const src = audioCtx.createBufferSource();
+                src.buffer = noiseBuffer;
+                const bp = audioCtx.createBiquadFilter();
+                bp.type = 'bandpass';
+                bp.Q.value = 3.2;
+                bp.frequency.setValueAtTime(280, now);
+                bp.frequency.exponentialRampToValueAtTime(2400, now + 0.45);
+                bp.frequency.exponentialRampToValueAtTime(420, now + 1.05);
+
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(0.001, now);
+                g.gain.linearRampToValueAtTime(0.18, now + 0.35);
+                g.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+                src.connect(bp);
+                bp.connect(g);
+                g.connect(masterBus);
+                src.start(now, 0, 1.15);
+            }
+
+            [67, 71, 74, 79, 76, 79, 83].forEach((m, idx) => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                const t = now + 0.12 + idx * 0.085;
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(midiToHz(m), t);
+                g.gain.setValueAtTime(0.13, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+                osc.connect(g);
+                g.connect(masterBus);
+                g.connect(hallEchoBus);
+                osc.start(t);
+                osc.stop(t + 0.3);
+            });
+        }
+
+        // Tiếng Đại Hồng Chung - Chuông Vàng 8 họa âm đồng thau vật lý
+        function ringGoldenBellAudio(animateHeader = false, animateGrand = false) {
+            if (animateHeader) {
+                const hb = document.getElementById('headerBell');
+                hb.classList.remove('bell-ringing');
+                void hb.offsetWidth;
+                hb.classList.add('bell-ringing');
+                setTimeout(() => hb.classList.remove('bell-ringing'), 1300);
+            }
+            if (animateGrand) {
+                const gb = document.getElementById('grandBellSvg');
+                gb.classList.remove('bell-ringing');
+                void gb.offsetWidth;
+                gb.classList.add('bell-ringing');
+            }
+            if (!soundEnabled) return;
+            ensureAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            const strike = audioCtx.createOscillator();
+            const sg = audioCtx.createGain();
+            strike.type = 'triangle';
+            strike.frequency.setValueAtTime(1480, now);
+            strike.frequency.exponentialRampToValueAtTime(290, now + 0.045);
+            sg.gain.setValueAtTime(0.28, now);
+            sg.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+            strike.connect(sg);
+            sg.connect(masterBus);
+            strike.start(now);
+            strike.stop(now + 0.06);
+
+            const f0 = 293.66;
+            [
+                { r: 0.5,   a: 0.22, d: 3.4 },
+                { r: 1.0,   a: 0.30, d: 3.0 },
+                { r: 1.2,   a: 0.18, d: 2.5 },
+                { r: 1.5,   a: 0.16, d: 2.2 },
+                { r: 2.0,   a: 0.24, d: 1.9 },
+                { r: 2.007, a: 0.15, d: 1.85 },
+                { r: 3.0,   a: 0.10, d: 1.3 },
+                { r: 4.18,  a: 0.07, d: 0.9 }
+            ].forEach(p => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f0 * p.r, now);
+                g.gain.setValueAtTime(0.001, now);
+                g.gain.linearRampToValueAtTime(p.a, now + 0.012);
+                g.gain.exponentialRampToValueAtTime(0.0006, now + p.d);
+                osc.connect(g);
+                g.connect(masterBus);
+                g.connect(hallEchoBus);
+                osc.start(now);
+                osc.stop(now + p.d + 0.05);
+            });
+
+            if (animateGrand) {
+                playStudioApplause(2.2, 0.14);
+            }
+        }
+
+        // Giọng đọc Tiếng Anh rõ ràng, tốc độ chậm rãi phù hợp học sinh Lớp 2
+        function speakEnglish(text) {
+            if (!soundEnabled || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'en-US';
+                utter.rate = 0.84;
+                utter.pitch = 1.08;
+                window.speechSynthesis.speak(utter);
+            } catch (e) {}
+        }
+
+        /* =========================================================================
+           2. KHO NGỮ LIỆU BẢNG CHIA 2, 3, 4, 5 GẮN VỚI TỰ NHIÊN & VĂN HÓA VIỆT (LỚP 2)
+           ========================================================================= */
+        const PRAISE_QUOTES = [
+            { vi: 'Giỏi quá! Em nhẩm ngược từ bảng nhân cực kỳ nhanh nhạy!', en: 'Awesome job! Your inverse multiplication skill is super fast!' },
+            { vi: 'Chính xác! Tiến thêm một bước thật gần chiếc Chuông Vàng!', en: 'Spot on! One step closer to the Golden Bell!' },
+            { vi: 'Hoan hô! Em nắm vững bảng chia rất chắc chắn!', en: 'Fantastic! You found the exact quotient!' },
+            { vi: 'Tuyệt vời! Cô giáo rất tự hào về sự tự tin của em!', en: 'Brilliant work! Keep shining on stage!' }
+        ];
+
+        // Bài toán thực tế Lớp 2: Câu văn ngắn gọn, gần gũi với thiên nhiên và văn hóa dân tộc
+        const GRADE2_DIVISION_STORIES = {
+            2: [
+                {
+                    vi: (N) => `Trên mâm cơm gia đình, bé giúp mẹ xếp <strong>${N}</strong> chiếc đũa tre thành các đôi đũa (mỗi đôi có <strong>2</strong> chiếc). Hỏi bé xếp được mấy đôi đũa?`,
+                    en: (N) => `🇬🇧 Culture Math: Each pair has 2 chopsticks. How many pairs are in ${N} chopsticks?`,
+                    speech: (N) => `Each pair has 2 chopsticks. How many pairs can we make from ${N} chopsticks?`
+                },
+                {
+                    vi: (N) => `Mỗi chú chim bồ câu trắng có <strong>2</strong> chiếc cánh. Đếm cả đàn đang bay thấy có <strong>${N}</strong> chiếc cánh. Hỏi đàn chim có mấy chú bồ câu?`,
+                    en: (N) => `🇬🇧 Nature Math: Each white dove has 2 wings. How many doves have ${N} wings altogether?`,
+                    speech: (N) => `Each white dove has 2 wings. How many doves have ${N} wings altogether?`
+                }
+            ],
+            3: [
+                {
+                    vi: (N) => `Mỗi nhánh cỏ ba lá có đúng <strong>3</strong> chiếc lá nhỏ. Bạn Mai đếm được tất cả <strong>${N}</strong> chiếc lá nhỏ. Hỏi Mai có mấy nhánh cỏ ba lá?`,
+                    en: (N) => `🇬🇧 Nature Math: Each clover has 3 leaves. How many clovers make ${N} leaves?`,
+                    speech: (N) => `Each clover has 3 leaves. How many clovers make ${N} leaves?`
+                },
+                {
+                    vi: (N) => `Mỗi hình tam giác rời nhau được xếp từ <strong>3</strong> que tính. Dùng hết <strong>${N}</strong> que tính thì bé xếp được mấy hình tam giác?`,
+                    en: (N) => `🇬🇧 Geometry Math: Each triangle uses 3 sticks. How many triangles can you build with ${N} sticks?`,
+                    speech: (N) => `Each triangle uses 3 sticks. How many triangles can you build with ${N} sticks?`
+                }
+            ],
+            4: [
+                {
+                    vi: (N) => `Mỗi chú mèo mướp đều có <strong>4</strong> cái chân nhỏ xinh. Dưới gầm bàn đếm được <strong>${N}</strong> cái chân mèo. Hỏi có tất cả mấy chú mèo mướp?`,
+                    en: (N) => `🇬🇧 Science Math: Each tabby cat has 4 legs. If there are ${N} legs, how many cats are there?`,
+                    speech: (N) => `Each cat has 4 legs. If there are ${N} legs in total, how many cats are there?`
+                },
+                {
+                    vi: (N) => `Ngày Tết, mẹ gói <strong>${N}</strong> chiếc bánh chưng xanh và xếp đều vào <strong>4</strong> giỏ quà biếu ông bà. Hỏi mỗi giỏ có mấy chiếc bánh chưng?`,
+                    en: (N) => `🇬🇧 Tet Tradition: Share ${N} sticky rice cakes equally into 4 baskets. How many cakes per basket?`,
+                    speech: (N) => `Share ${N} Tet cakes equally into 4 baskets. How many cakes are in each basket?`
+                }
+            ],
+            5: [
+                {
+                    vi: (N) => `Mỗi ngôi sao vàng trên Quốc kỳ Việt Nam có <strong>5</strong> cánh sao. Tổ của Nam cắt giấy được tổng cộng <strong>${N}</strong> cánh sao. Hỏi có mấy ngôi sao vàng?`,
+                    en: (N) => `🇬🇧 Vietnam Flag: Each golden star has 5 points. How many stars make ${N} points in total?`,
+                    speech: (N) => `Each golden star has 5 points. How many stars make ${N} points in total?`
+                },
+                {
+                    vi: (N) => `Mỗi bông hoa mai vàng ngày Tết có <strong>5</strong> cánh hoa. Trên cành xuân đếm được <strong>${N}</strong> cánh hoa. Hỏi trên cành đang nở mấy bông hoa mai?`,
+                    en: (N) => `🇬🇧 Spring Blossom: Each apricot flower has 5 petals. How many flowers have ${N} petals?`,
+                    speech: (N) => `Each apricot flower has 5 petals. How many flowers have ${N} petals altogether?`
+                }
+            ]
+        };
+
+        /* =========================================================================
+           3. TRẠNG THÁI TRÒ CHƠI & CẤU HÌNH SẢNH CHỜ
+           ========================================================================= */
+        const TOTAL_STEPS = 20;
+        let selectedDivTables = [2, 3, 4, 5];
+        let gameMode = 'mixed'; // 'mixed' | 'mcq' | 'slate'
+        let bilingualActive = true;
+
+        let questionDeck = [];
+        let stepIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let slateInputStr = '';
+        let canAnswer = false;
+
+        let timerInterval = null;
+        let timeLeft = 22;
+        let maxTime = 22;
+
+        let lifelines = {
+            plane: true,
+            extraTime: true,
+            swap: true,
+            stageShield: true
+        };
+
+        function renderStudyDivTables() {
+            const grid = document.getElementById('studyDivGrid');
+            const styles = {
+                2: 'border-amber-400/50 bg-amber-950/40 text-amber-300',
+                3: 'border-emerald-400/50 bg-emerald-950/40 text-emerald-300',
+                4: 'border-sky-400/50 bg-sky-950/40 text-sky-300',
+                5: 'border-purple-400/50 bg-purple-950/40 text-purple-300'
+            };
+
+            grid.innerHTML = [2, 3, 4, 5].map(d => {
+                let rows = '';
+                for (let q = 1; q <= 10; q++) {
+                    rows += `<div class="flex justify-between py-0.5 border-b border-slate-800/70 text-xs sm:text-sm font-bold text-slate-200">
+                        <span>${d * q} : ${d}</span>
+                        <span class="text-amber-300 font-black">= ${q}</span>
+                    </div>`;
+                }
+                return `<div class="rounded-2xl border-2 p-3 ${styles[d]}">
+                    <div class="text-center font-black text-base mb-2">BẢNG CHIA ${d}</div>
+                    ${rows}
+                </div>`;
+            }).join('');
+        }
+
+        function toggleStudyModal(show) {
+            playClickPop(600);
+            const m = document.getElementById('studyModal');
+            if (show) {
+                renderStudyDivTables();
+                m.classList.remove('hidden');
+            } else {
+                m.classList.add('hidden');
+            }
+        }
+
+        function toggleBilingualMode() {
+            bilingualActive = !bilingualActive;
+            playClickPop(650);
+            document.getElementById('bilingualStatusText').textContent = bilingualActive ? 'Song ngữ: BẬT' : 'Song ngữ: TẮT';
+            document.getElementById('questionMainEn').classList.toggle('hidden', !bilingualActive);
+            document.getElementById('teacherMsgEn').classList.toggle('hidden', !bilingualActive);
+        }
+
+        function toggleDivTable(num) {
+            playClickPop(620);
+            const pos = selectedDivTables.indexOf(num);
+            if (pos > -1) {
+                selectedDivTables.splice(pos, 1);
+            } else {
+                selectedDivTables.push(num);
+                selectedDivTables.sort((a, b) => a - b);
+            }
+            refreshLobbySelections();
+        }
+
+        function selectCoreGrade2Tables() {
+            playClickPop(680);
+            selectedDivTables = [2, 5];
+            refreshLobbySelections();
+        }
+
+        function selectAllDivTables() {
+            playClickPop(700);
+            selectedDivTables = [2, 3, 4, 5];
+            refreshLobbySelections();
+        }
+
+        function selectGameMode(mode) {
+            playClickPop(640);
+            gameMode = mode;
+            refreshLobbySelections();
+        }
+
+        function refreshLobbySelections() {
+            [2, 3, 4, 5].forEach(d => {
+                const btn = document.getElementById(`divBtn-${d}`);
+                if (selectedDivTables.includes(d)) {
+                    btn.className = 'py-3 px-2.5 rounded-2xl font-black text-base border-2 border-amber-400 bg-amber-500/20 text-amber-200 transition flex flex-col items-center shadow-[0_0_16px_rgba(250,204,21,0.22)]';
+                } else {
+                    btn.className = 'py-3 px-2.5 rounded-2xl font-black text-base border-2 border-slate-700 bg-slate-900/70 text-slate-400 transition flex flex-col items-center';
+                }
+            });
+            document.getElementById('tableWarning').classList.toggle('hidden', selectedDivTables.length > 0);
+
+            ['mixed', 'mcq', 'slate'].forEach(m => {
+                const card = document.getElementById(`modeCard-${m}`);
+                if (m === gameMode) {
+                    card.className = 'p-3.5 rounded-2xl border-2 border-amber-400 bg-amber-500/20 text-left transition shadow-[0_0_16px_rgba(250,204,21,0.2)]';
+                } else {
+                    card.className = 'p-3.5 rounded-2xl border-2 border-slate-700 bg-slate-900/70 hover:border-slate-500 text-left transition';
+                }
+            });
+        }
+
+        /* =========================================================================
+           4. THUẬT TOÁN SINH 20 CÂU HỎI BẢNG CHIA 2, 3, 4, 5 CHUẨN LỚP 2
+              - Chặng 1 (Câu 1–6): Phép chia trực tiếp & Từ một phép nhân suy ra phép chia
+              - Chặng 2 (Câu 7–12): Tên gọi Số bị chia - Số chia - Thương, Ô trống [?] & Đơn vị đo (kg, lít, cm, dm)
+              - Chặng 3 (Câu 13–17): Bài toán Khoa học Tự nhiên, Văn hóa Việt & Xem đồng hồ Lớp 2
+              - Chặng 4 (Câu 18–20): Đỉnh Chuông Vàng (Dãy tính 2 bước thực hiện lần lượt từ trái sang phải!)
+           ========================================================================= */
+        function createGrade2DivDistractors(correctAns, divisor = 2) {
+            const set = new Set();
+            // Nhiễu sư phạm dựa trên lỗi nhẩm lệch 1 bậc bảng nhân của học sinh Lớp 2
+            const near = [
+                correctAns - 1,
+                correctAns + 1,
+                correctAns + 2,
+                correctAns - 2,
+                divisor,
+                correctAns + divisor
+            ];
+            for (const v of near) {
+                if (v >= 1 && v !== correctAns) set.add(v);
+                if (set.size === 3) break;
+            }
+
+            while (set.size < 3) {
+                const delta = (Math.floor(Math.random() * 4) + 1) * (Math.random() > 0.5 ? 1 : -1);
+                const cand = correctAns + delta;
+                if (cand >= 1 && cand !== correctAns) set.add(cand);
+            }
+
+            const opts = [correctAns, ...Array.from(set)];
+            for (let i = opts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [opts[i], opts[j]] = [opts[j], opts[i]];
+            }
+            return opts;
+        }
+
+        function generateGrade2DivQuestion(stepNum, usedSet) {
+            let d = selectedDivTables[Math.floor(Math.random() * selectedDivTables.length)];
+            let q = 2;
+            let key = '';
+            let guard = 0;
+
+            if (stepNum <= 6) {
+                // CHẶNG 1: Khởi động phản xạ Bảng chia & Từ một phép nhân suy ra phép chia
+                do {
+                    d = selectedDivTables[Math.floor(Math.random() * selectedDivTables.length)];
+                    q = stepNum <= 2 ? (Math.floor(Math.random() * 4) + 2) : (Math.floor(Math.random() * 9) + 2);
+                    key = `g2d-c1-${d}-${q}`;
+                    guard++;
+                } while (usedSet.has(key) && guard < 35);
+                usedSet.add(key);
+
+                const dividend = d * q;
+
+                if (stepNum === 5) {
+                    // Trọng tâm SGK Toán 2: Từ phép nhân suy ra phép chia tương ứng
+                    return {
+                        stage: 'Chặng 1 • Từ Phép Nhân Suy Ra Phép Chia',
+                        vi: `<span class="text-xl sm:text-3xl font-extrabold block">Biết <strong class="text-sky-300">${d} × ${q} = ${dividend}</strong>.<br>Vậy <strong class="text-amber-300 mt-1 inline-block">${dividend} : ${d} = ?</strong></span>`,
+                        en: `🇬🇧 Inverse Link: Since ${d} × ${q} = ${dividend}, what is ${dividend} ÷ ${d}?`,
+                        speech: `Since ${d} times ${q} equals ${dividend}, what is ${dividend} divided by ${d}?`,
+                        answer: q,
+                        unit: '',
+                        options: createGrade2DivDistractors(q, d),
+                        hint: `Lấy tích ${dividend} chia cho thừa số ${d} thì được ngay thừa số kia là ${q}!`,
+                        explain: `Vì ${d} × ${q} = ${dividend} nên ${dividend} : ${d} = ${q}.`
+                    };
+                }
+
+                return {
+                    stage: 'Chặng 1 • Khởi Động Bảng Chia',
+                    vi: `${dividend} : ${d} = <span class="text-amber-300">?</span>`,
+                    en: `🇬🇧 Math English (${dividend} ÷ ${d}): What is ${dividend} divided by ${d}?`,
+                    speech: `What is ${dividend} divided by ${d}?`,
+                    answer: q,
+                    unit: '',
+                    options: createGrade2DivDistractors(q, d),
+                    hint: `Em nhẩm ngược bảng nhân ${d}: ${d} nhân mấy thì bằng ${dividend}?`,
+                    explain: `Vì ${d} × ${q} = ${dividend} nên ${dividend} : ${d} = ${q}.`
+                };
+
+            } else if (stepNum <= 12) {
+                // CHẶNG 2: Thuật ngữ Số bị chia - Số chia - Thương, Ô trống [?] & Phép chia có đơn vị đo Lớp 2
+                do {
+                    d = selectedDivTables[Math.floor(Math.random() * selectedDivTables.length)];
+                    q = Math.floor(Math.random() * 7) + 3; // 3..9
+                    key = `g2d-c2-${stepNum % 3}-${d}-${q}`;
+                    guard++;
+                } while (usedSet.has(key) && guard < 35);
+                usedSet.add(key);
+
+                const dividend = d * q;
+                const subType = stepNum % 3;
+
+                if (subType === 1) {
+                    // Khắc sâu tên gọi Số bị chia - Số chia - Thương
+                    return {
+                        stage: 'Chặng 2 • Số Bị Chia – Số Chia – Thương',
+                        vi: `<span class="text-xl sm:text-3xl font-extrabold block">Biết <strong class="text-sky-300">Số bị chia</strong> là <strong class="text-amber-300">${dividend}</strong> và <strong class="text-sky-300">Số chia</strong> là <strong class="text-amber-300">${d}</strong>. Hỏi <strong class="text-emerald-300">Thương</strong> bằng bao nhiêu?</span>`,
+                        en: `🇬🇧 Math Terms: The dividend is ${dividend} and the divisor is ${d}. What is the quotient?`,
+                        speech: `The dividend is ${dividend} and the divisor is ${d}. What is the quotient?`,
+                        answer: q,
+                        unit: '',
+                        options: createGrade2DivDistractors(q, d),
+                        hint: `Muốn tìm Thương, em lấy Số bị chia chia cho Số chia: ${dividend} : ${d}!`,
+                        explain: `Số bị chia là ${dividend}, Số chia là ${d}, nên Thương là: ${dividend} : ${d} = ${q}.`
+                    };
+                } else if (subType === 2) {
+                    // Tìm số bí ẩn trong ô trống [?]
+                    return {
+                        stage: 'Chặng 2 • Tìm Số Bí Ẩn Trong Ô Trống',
+                        vi: `${dividend} : <span class="px-3 py-0.5 rounded-xl bg-amber-400/20 border border-amber-300 text-amber-300">?</span> = ${q}`,
+                        en: `🇬🇧 Mystery Number: ${dividend} divided by what number equals ${q}?`,
+                        speech: `${dividend} divided by what number equals ${q}?`,
+                        answer: d,
+                        unit: '',
+                        options: createGrade2DivDistractors(d, q),
+                        hint: `Trong bảng chia nào mà ${dividend} chia cho số đó được ${q}? (Nhẩm: mấy nhân ${q} bằng ${dividend}?)`,
+                        explain: `Vì ${dividend} : ${d} = ${q} (do ${d} × ${q} = ${dividend}) nên số cần điền là ${d}.`
+                    };
+                } else {
+                    // Phép chia kèm đơn vị đo đại lượng Lớp 2 (kg, lít, cm, dm)
+                    const units = [
+                        { u: 'kg', en: 'kilograms' },
+                        { u: 'lít', en: 'liters' },
+                        { u: 'cm', en: 'centimeters' },
+                        { u: 'dm', en: 'decimeters' }
+                    ];
+                    const picked = units[stepNum % units.length];
+                    return {
+                        stage: 'Chặng 2 • Phép Chia Có Đơn Vị Đo',
+                        vi: `${dividend} ${picked.u} : ${d} = <span class="text-amber-300">? ${picked.u}</span>`,
+                        en: `🇬🇧 Measurement Math: What is ${dividend} ${picked.en} divided by ${d}?`,
+                        speech: `What is ${dividend} ${picked.en} divided by ${d}?`,
+                        answer: q,
+                        unit: picked.u,
+                        options: createGrade2DivDistractors(q, d),
+                        hint: `Em nhẩm phép chia ${dividend} : ${d} như bình thường rồi giữ nguyên đơn vị ${picked.u} nhé!`,
+                        explain: `Ta có ${dividend} ${picked.u} : ${d} = ${q} ${picked.u}.`
+                    };
+                }
+
+            } else if (stepNum <= 17) {
+                // CHẶNG 3: Bài toán Khoa học Tự nhiên, Văn hóa Việt Nam & Xem đồng hồ Lớp 2
+                do {
+                    d = selectedDivTables[Math.floor(Math.random() * selectedDivTables.length)];
+                    q = Math.floor(Math.random() * 6) + 4; // 4..9
+                    key = `g2d-story-${d}-${q}-${stepNum % 2}`;
+                    guard++;
+                } while (usedSet.has(key) && guard < 35);
+                usedSet.add(key);
+
+                // Câu 16 đặc biệt nếu có chọn Bảng chia 5: Ứng dụng Bảng chia 5 để tìm vị trí kim phút trên mặt đồng hồ!
+                if (stepNum === 16 && selectedDivTables.includes(5)) {
+                    const targetNum = 7; // 35 phút : 5 = chỉ đúng vào số 7
+                    const totalMins = 5 * targetNum;
+                    return {
+                        stage: 'Chặng 3 • Ứng Dụng Xem Đồng Hồ Lớp 2',
+                        vi: `<span class="text-lg sm:text-2xl font-extrabold leading-relaxed block">Trên mặt đồng hồ, mỗi khoảng từ số này sang số tiếp theo là <strong>5 phút</strong>. Khi đồng hồ chỉ <strong>8 giờ ${totalMins} phút</strong>, đố bé kim phút đang chỉ đúng vào số mấy?</span>`,
+                        en: `🇬🇧 Clock Math: Each number step is 5 minutes. Divide ${totalMins} minutes by 5 to find the number!`,
+                        speech: `Each number step on the clock is 5 minutes. What is ${totalMins} divided by 5?`,
+                        answer: targetNum,
+                        unit: '',
+                        options: createGrade2DivDistractors(targetNum, 5),
+                        hint: `Mỗi số cách nhau 5 phút, em lấy ${totalMins} : 5 là biết ngay kim phút chỉ vào số mấy!`,
+                        explain: `Ta lấy ${totalMins} : 5 = ${targetNum}. Vậy kim phút chỉ đúng vào số ${targetNum}!`
+                    };
+                }
+
+                const dividend = d * q;
+                const templates = GRADE2_DIVISION_STORIES[d];
+                const tpl = templates[stepNum % templates.length];
+
+                return {
+                    stage: 'Chặng 3 • Thiên Nhiên & Văn Hóa Việt Nam',
+                    vi: `<span class="text-lg sm:text-2xl font-extrabold leading-relaxed block">${tpl.vi(dividend)}</span>`,
+                    en: tpl.en(dividend),
+                    speech: tpl.speech(dividend),
+                    answer: q,
+                    unit: '',
+                    options: createGrade2DivDistractors(q, d),
+                    hint: `Có tất cả ${dividend}, chia đều theo ${d}. Bé thực hiện phép chia ${dividend} : ${d} nhé!`,
+                    explain: `Phép tính đúng là: ${dividend} : ${d} = ${q}.`
+                };
+
+            } else {
+                // CHẶNG 4 (Câu 18–20): Đỉnh Chuông Vàng Lớp 2 (Dãy tính 2 bước thực hiện LẦN LƯỢT TỪ TRÁI SANG PHẢI!)
+                d = selectedDivTables[Math.floor(Math.random() * selectedDivTables.length)];
+                q = Math.floor(Math.random() * 5) + 5; // 5..9
+                const dividend = d * q;
+
+                const isPlus = (stepNum !== 19);
+                const extra = stepNum === 20 ? 14 : (isPlus ? 11 : 3);
+                const ans = isPlus ? (q + extra) : (q - extra);
+
+                return {
+                    stage: stepNum === 20 ? '🔔 CÂU HỎI QUYẾT ĐỊNH RUNG CHUÔNG VÀNG' : 'Chặng Cuối • Đỉnh Cao Chuông Vàng',
+                    vi: `${stepNum === 20 ? '🔔 ' : ''}Tính kết quả dãy tính (tính từ trái sang phải):<br><span class="text-amber-300 mt-1 inline-block">${dividend} : ${d} ${isPlus ? '+' : '-'} ${extra} = ?</span>`,
+                    en: `🇬🇧 Golden Bell Challenge: Calculate (${dividend} ÷ ${d}) ${isPlus ? 'plus' : 'minus'} ${extra}.`,
+                    speech: `Golden Bell Challenge! Calculate ${dividend} divided by ${d}, ${isPlus ? 'plus' : 'minus'} ${extra}.`,
+                    answer: ans,
+                    unit: '',
+                    options: createGrade2DivDistractors(ans, d),
+                    hint: `Bé tính lần lượt từ trái sang phải nhé: Bước 1 tính ${dividend} : ${d} = ${q}, Bước 2 lấy ${q} ${isPlus ? '+' : '-'} ${extra}!`,
+                    explain: `Bước 1: ${dividend} : ${d} = ${q}. Bước 2: ${q} ${isPlus ? '+' : '-'} ${extra} = ${ans}.`
+                };
+            }
+        }
+
+        function buildArenaQuestionDeck() {
+            questionDeck = [];
+            const usedSet = new Set();
+            for (let s = 1; s <= TOTAL_STEPS; s++) {
+                questionDeck.push(generateGrade2DivQuestion(s, usedSet));
+            }
+        }
+
+        /* =========================================================================
+           5. ĐIỀU PHỐI LUỒNG CHƠI TRÊN SÀN ĐẤU & BẢNG CON HỌC SINH LỚP 2
+           ========================================================================= */
+        function startGoldenBellArena() {
+            if (selectedDivTables.length === 0) {
+                document.getElementById('tableWarning').classList.remove('hidden');
+                playWrongShowSound();
+                return;
+            }
+            ensureAudio();
+            stopArenaBGM();
+            stopConfetti();
+            ringGoldenBellAudio(true, false);
+            playOpeningFanfare();
+
+            const rawName = document.getElementById('playerNameInput').value.trim();
+            document.getElementById('arenaPlayerName').textContent = rawName || 'Bé Thông Thái 2A';
+
+            stepIndex = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            lifelines = { plane: true, extraTime: true, swap: true, stageShield: true };
+            syncLifelineButtons();
+            buildArenaQuestionDeck();
+
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('arenaScreen').classList.remove('hidden');
+            document.getElementById('homeBtn').classList.remove('hidden');
+
+            loadStepQuestion();
+        }
+
+        function returnToLobby() {
+            clearInterval(timerInterval);
+            stopArenaBGM();
+            stopConfetti();
+            playClickPop(500);
+
+            document.getElementById('arenaScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('homeBtn').classList.add('hidden');
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+        }
+
+        function renderLadderSteps() {
+            const box = document.getElementById('ladderGrid');
+            let html = '';
+            for (let i = 0; i < TOTAL_STEPS; i++) {
+                const num = i + 1;
+                let cls = 'bg-slate-900 text-slate-400 border-slate-700';
+                if (i < stepIndex) {
+                    cls = 'bg-emerald-500 text-slate-950 border-emerald-300 font-black';
+                } else if (i === stepIndex) {
+                    cls = 'bg-amber-400 text-slate-950 border-white font-black scale-110 shadow-[0_0_12px_rgba(250,204,21,0.85)] z-10';
+                } else if (num === 20) {
+                    cls = 'bg-amber-950/80 text-amber-300 border-amber-500/60 font-black';
+                }
+                html += `<div class="h-7 rounded-lg border text-xs flex items-center justify-center transition-all ${cls}">${num === 20 ? '🔔' : num}</div>`;
+            }
+            box.innerHTML = html;
+        }
+
+        function shouldUseSlateKeypad(idx) {
+            if (gameMode === 'mcq') return false;
+            if (gameMode === 'slate') return true;
+            return idx >= 14; // Câu 15 -> 20 tự viết số lên bảng con
+        }
+
+        function syncLifelineButtons() {
+            document.getElementById('btnPlaneHelp').disabled = !lifelines.plane;
+            document.getElementById('btnTimeHelp').disabled = !lifelines.extraTime;
+            document.getElementById('btnSwapHelp').disabled = !lifelines.swap;
+
+            const shieldEl = document.getElementById('stageShieldBadge');
+            if (lifelines.stageShield) {
+                shieldEl.textContent = 'Còn 1 lần';
+                shieldEl.className = 'font-black text-emerald-400';
+            } else {
+                shieldEl.textContent = 'Đã dùng';
+                shieldEl.className = 'font-bold text-slate-500';
+            }
+        }
+
+        function loadStepQuestion() {
+            canAnswer = true;
+            slateInputStr = '';
+            const slateTextEl = document.getElementById('slateValueText');
+            slateTextEl.textContent = '?';
+            slateTextEl.className = 'text-3xl font-black text-amber-300 tracking-widest min-h-[36px] inline-block';
+            document.getElementById('hintBannerBox').classList.add('hidden');
+
+            const q = questionDeck[stepIndex];
+            const stepNum = stepIndex + 1;
+
+            document.getElementById('currentStepText').textContent = stepNum;
+            document.getElementById('scoreCount').textContent = score;
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('stageBadgeLabel').textContent = q.stage;
+            document.getElementById('tableScopeTag').textContent = `Bảng chia: ${selectedDivTables.join(', ')}`;
+            document.getElementById('slateUnitSuffix').textContent = q.unit ? q.unit : '';
+
+            document.getElementById('questionMainVi').innerHTML = q.vi;
+            const enEl = document.getElementById('questionMainEn');
+            enEl.textContent = q.en;
+            enEl.classList.toggle('hidden', !bilingualActive);
+
+            renderLadderSteps();
+
+            const useKeypad = shouldUseSlateKeypad(stepIndex);
+            const mcqBox = document.getElementById('mcqOptionsGrid');
+            const slateBox = document.getElementById('slateKeypadArea');
+            const tag = document.getElementById('inputMethodTag');
+
+            if (useKeypad) {
+                mcqBox.classList.add('hidden');
+                slateBox.classList.remove('hidden');
+                tag.innerHTML = `<i class="fa-solid fa-chalkboard text-emerald-300 mr-1"></i>Tự viết thương lên Bảng con`;
+            } else {
+                slateBox.classList.add('hidden');
+                mcqBox.classList.remove('hidden');
+                tag.innerHTML = `<i class="fa-solid fa-hand-pointer text-amber-300 mr-1"></i>Chọn nhanh đáp án đúng`;
+
+                const letters = ['A', 'B', 'C', 'D'];
+                mcqBox.innerHTML = q.options.map((val, idx) => {
+                    const disp = q.unit ? `${val} ${q.unit}` : `${val}`;
+                    return `
+                        <button id="optBtn-${idx}" onclick="selectMcqOption(${val}, ${idx})"
+                            class="btn-option py-4 px-3 rounded-2xl text-white font-black text-xl sm:text-2xl flex items-center justify-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400/50 text-amber-300 text-xs flex items-center justify-center font-extrabold">${letters[idx]}</span>
+                            <span>${disp}</span>
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            // Thời gian rộng rãi cho học sinh Lớp 2 đọc đề thoải mái: Câu ngắn 22s, câu lời văn & dãy tính 30s
+            maxTime = stepNum >= 13 ? 30 : 22;
+            startStepTimer(maxTime);
+
+            setTimeout(() => {
+                if (canAnswer && !document.getElementById('arenaScreen').classList.contains('hidden')) {
+                    startArenaBGM();
+                }
+            }, stepIndex === 0 ? 950 : 250);
+        }
+
+        function startStepTimer(seconds) {
+            clearInterval(timerInterval);
+            timeLeft = seconds;
+            updateTimerVisual();
+
+            timerInterval = setInterval(() => {
+                if (!canAnswer) return;
+                timeLeft--;
+                updateTimerVisual();
+
+                if (timeLeft <= 5 && timeLeft > 0) playFinalSecondsBeep(true);
+                else if (timeLeft > 5) playFinalSecondsBeep(false);
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    playTimeUpGong();
+                    handleWrongOrTimeout(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerVisual() {
+            const numEl = document.getElementById('timerNumber');
+            const circle = document.getElementById('timerCircle');
+            numEl.textContent = timeLeft;
+
+            const circum = 264;
+            const ratio = Math.max(0, timeLeft / maxTime);
+            circle.style.strokeDashoffset = circum * (1 - ratio);
+
+            if (timeLeft <= 5) {
+                circle.setAttribute('stroke', '#ef4444');
+                numEl.className = 'text-2xl sm:text-3xl font-black text-rose-400 animate-pulse';
+            } else if (timeLeft <= 10) {
+                circle.setAttribute('stroke', '#f59e0b');
+                numEl.className = 'text-2xl sm:text-3xl font-black text-amber-300';
+            } else {
+                circle.setAttribute('stroke', '#22c55e');
+                numEl.className = 'text-2xl sm:text-3xl font-black text-white';
+            }
+        }
+
+        /* =========================================================================
+           6. XỬ LÝ CHẤM ĐÁP ÁN & BÀN PHÍM BẢNG CON
+           ========================================================================= */
+        function selectMcqOption(chosenVal, btnIdx) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            clearInterval(timerInterval);
+
+            const q = questionDeck[stepIndex];
+            const btn = document.getElementById(`optBtn-${btnIdx}`);
+
+            if (chosenVal === q.answer) {
+                if (btn) btn.classList.add('correct');
+                handleCorrectStep();
+            } else {
+                if (btn) btn.classList.add('wrong');
+                q.options.forEach((opt, idx) => {
+                    if (opt === q.answer) {
+                        const rightBtn = document.getElementById(`optBtn-${idx}`);
+                        if (rightBtn) rightBtn.classList.add('correct');
+                    }
+                });
+                handleWrongOrTimeout(false);
+            }
+        }
+
+        function typeDigit(d) {
+            if (!canAnswer) return;
+            playClickPop(640);
+            if (slateInputStr.length < 3) {
+                slateInputStr += d;
+                document.getElementById('slateValueText').textContent = slateInputStr;
+            }
+        }
+
+        function clearSlateDigits() {
+            if (!canAnswer) return;
+            playClickPop(480);
+            slateInputStr = '';
+            document.getElementById('slateValueText').textContent = '?';
+        }
+
+        function submitSlateNumber() {
+            if (!canAnswer || slateInputStr === '') return;
+            canAnswer = false;
+            clearInterval(timerInterval);
+
+            const val = parseInt(slateInputStr, 10);
+            const q = questionDeck[stepIndex];
+            const slateEl = document.getElementById('slateValueText');
+
+            if (val === q.answer) {
+                slateEl.className = 'text-3xl font-black text-emerald-400 tracking-widest min-h-[36px] inline-block';
+                handleCorrectStep();
+            } else {
+                slateEl.className = 'text-3xl font-black text-rose-400 tracking-widest min-h-[36px] inline-block';
+                const hintBox = document.getElementById('hintBannerBox');
+                const dispRight = q.unit ? `${q.answer} ${q.unit}` : `${q.answer}`;
+                hintBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i>Đáp án đúng trên bảng con là: <strong class="text-white text-base">${dispRight}</strong> (${q.explain})`;
+                hintBox.classList.remove('hidden');
+                handleWrongOrTimeout(false);
+            }
+        }
+
+        // Hỗ trợ nhập bằng bàn phím máy tính trên lớp học
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('arenaScreen').classList.contains('hidden') || !canAnswer) return;
+            if (shouldUseSlateKeypad(stepIndex)) {
+                if (e.key >= '0' && e.key <= '9') typeDigit(e.key);
+                else if (e.key === 'Backspace' || e.key === 'Delete') clearSlateDigits();
+                else if (e.key === 'Enter') submitSlateNumber();
+            }
+        });
+
+        function handleCorrectStep() {
+            const isFinalQuestion = (stepIndex === TOTAL_STEPS - 1);
+            if (isFinalQuestion) {
+                ringGoldenBellAudio(true, false);
+            } else {
+                playCorrectShowSound();
+            }
+
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+            score += 10 + Math.min(streak * 2, 10);
+
+            document.getElementById('scoreCount').textContent = score;
+            document.getElementById('streakCount').textContent = streak;
+
+            const quote = PRAISE_QUOTES[Math.floor(Math.random() * PRAISE_QUOTES.length)];
+            document.getElementById('teacherMsgVi').textContent = quote.vi;
+            document.getElementById('teacherMsgEn').textContent = `"${quote.en}"`;
+
+            setTimeout(() => {
+                stepIndex++;
+                if (stepIndex >= TOTAL_STEPS) {
+                    finishArenaGame(true, null);
+                } else {
+                    loadStepQuestion();
+                }
+            }, 1200);
+        }
+
+        function handleWrongOrTimeout(isTimeout) {
+            if (!isTimeout) {
+                playWrongShowSound();
+            } else {
+                setTimeout(() => playWrongShowSound(), 320);
+            }
+
+            streak = 0;
+            document.getElementById('streakCount').textContent = 0;
+
+            const q = questionDeck[stepIndex];
+            const prefix = isTimeout ? '⏰ Hết thời gian giơ bảng!' : '❌ Kết quả chưa chính xác rồi!';
+            document.getElementById('teacherMsgVi').textContent = `${prefix} ${q.explain}`;
+            document.getElementById('teacherMsgEn').textContent = `"Don't give up! Let's check the multiplication table!"`;
+
+            // Nếu còn Phao Cứu Trợ Sân Đấu (và chưa phải câu 20 cuối cùng), thầy cô tung cứu trợ 1 lần!
+            if (lifelines.stageShield && stepIndex < TOTAL_STEPS - 1) {
+                setTimeout(() => {
+                    document.getElementById('stageRescueExplain').innerHTML =
+                        `<div class="font-black text-rose-300 mb-1">${prefix}</div>
+                         <div class="font-bold text-amber-300 mb-1">${q.explain}</div>
+                         <div class="text-slate-300 text-xs">${q.hint}</div>`;
+                    document.getElementById('stageRescueModal').classList.remove('hidden');
+                }, 950);
+            } else {
+                setTimeout(() => {
+                    finishArenaGame(false, q);
+                }, 1550);
+            }
+        }
+
+        function acceptStageRescue() {
+            lifelines.stageShield = false;
+            syncLifelineButtons();
+            document.getElementById('stageRescueModal').classList.add('hidden');
+
+            triggerPaperPlaneAnimation();
+            playPaperPlaneSound();
+
+            stepIndex++;
+            loadStepQuestion();
+        }
+
+        function speakCurrentMathEnglish() {
+            const q = questionDeck[stepIndex];
+            if (!q) return;
+            speakEnglish(q.speech);
+        }
+
+        /* =========================================================================
+           7. BA QUYỀN CỨU TRỢ CHỦ ĐỘNG TRÊN BẢNG CON
+           ========================================================================= */
+        function triggerPaperPlaneAnimation() {
+            const overlay = document.getElementById('paperPlaneOverlay');
+            const badge = document.getElementById('paperPlaneBadge');
+            overlay.classList.remove('hidden');
+            badge.classList.remove('plane-anim');
+            void badge.offsetWidth;
+            badge.classList.add('plane-anim');
+            setTimeout(() => overlay.classList.add('hidden'), 1850);
+        }
+
+        // 1. Máy bay giấy Thầy Cô: Hiện gợi ý nhẩm ngược bảng nhân & loại 2 phương án sai
+        function usePaperPlaneLifeline() {
+            if (!canAnswer || !lifelines.plane) return;
+            lifelines.plane = false;
+            syncLifelineButtons();
+            playPaperPlaneSound();
+            triggerPaperPlaneAnimation();
+
+            const q = questionDeck[stepIndex];
+            const box = document.getElementById('hintBannerBox');
+            box.innerHTML = `<i class="fa-solid fa-paper-plane text-sky-300 mr-1.5"></i><strong>Thư từ Máy Bay Giấy Thầy Cô:</strong> ${q.hint}`;
+            box.classList.remove('hidden');
+
+            if (!shouldUseSlateKeypad(stepIndex)) {
+                let hiddenCount = 0;
+                q.options.forEach((opt, idx) => {
+                    if (opt !== q.answer && hiddenCount < 2) {
+                        const b = document.getElementById(`optBtn-${idx}`);
+                        if (b) {
+                            b.disabled = true;
+                            b.classList.add('opacity-20', 'line-through');
+                            hiddenCount++;
+                        }
+                    }
+                });
+            }
+        }
+
+        // 2. Cộng thêm 15 giây suy nghĩ
+        function useExtraTimeLifeline() {
+            if (!canAnswer || !lifelines.extraTime) return;
+            lifelines.extraTime = false;
+            syncLifelineButtons();
+            playCorrectShowSound();
+            if (studioBgmOn) startArenaBGM();
+
+            timeLeft += 15;
+            maxTime = Math.max(maxTime, timeLeft);
+            updateTimerVisual();
+
+            document.getElementById('teacherMsgVi').textContent = '⏳ Đã cộng thêm 15 giây! Bé cứ bình tĩnh nhẩm bảng nhân tương ứng nhé!';
+            document.getElementById('teacherMsgEn').textContent = '"Plus 15 extra seconds! Take your time!"';
+        }
+
+        // 3. Đổi câu hỏi khác cùng cấp độ
+        function useSwapQuestionLifeline() {
+            if (!canAnswer || !lifelines.swap) return;
+            lifelines.swap = false;
+            syncLifelineButtons();
+            playClickPop(740);
+
+            questionDeck[stepIndex] = generateGrade2DivQuestion(stepIndex + 1, new Set());
+            loadStepQuestion();
+        }
+
+        /* =========================================================================
+           8. VINH DANH RUNG CHUÔNG VÀNG & HIỆU ỨNG PHÁO HOA
+           ========================================================================= */
+        function finishArenaGame(isChampion, failedQuestion) {
+            clearInterval(timerInterval);
+            stopArenaBGM();
+
+            document.getElementById('arenaScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            const player = document.getElementById('arenaPlayerName').textContent;
+            const grandBell = document.getElementById('grandBellSvg');
+
+            document.getElementById('finalStepStat').textContent = `${isChampion ? TOTAL_STEPS : stepIndex}/${TOTAL_STEPS}`;
+            document.getElementById('finalScoreStat').textContent = score;
+            document.getElementById('finalStreakStat').textContent = maxStreak;
+
+            const tag = document.getElementById('resultLaurelTag');
+            const title = document.getElementById('resultMainTitle');
+            const sub = document.getElementById('resultSubTitle');
+            const revCard = document.getElementById('reviewNoteCard');
+            const revText = document.getElementById('reviewNoteText');
+
+            if (isChampion) {
+                playOpeningFanfare();
+                ringGoldenBellAudio(false, true);
+                setTimeout(() => ringGoldenBellAudio(false, true), 1150);
+                startConfetti();
+
+                tag.textContent = '👑 VÒNG NGUYỆT QUẾ RUNG CHUÔNG VÀNG LỚP 2';
+                title.textContent = `HOAN HÔ! ${player.toUpperCase()} ĐÃ RUNG CHUÔNG VÀNG!`;
+                sub.innerHTML = `Em đã chinh phục trọn vẹn cả <strong>20/20 câu hỏi</strong> Bảng chia ${selectedDivTables.join(', ')}! Chạm vào chiếc Chuông Vàng để ngân vang chiến thắng nhé! <em>(Congratulations, Grade 2 Division Champion!)</em>`;
+                revCard.classList.add('hidden');
+                speakEnglish('Congratulations! You have mastered the division tables and rung the Golden Bell!');
+            } else {
+                grandBell.classList.remove('bell-ringing');
+                tag.textContent = '🌟 CHIẾN BINH NHÍ ĐÁNG KHEN NGỢI';
+                title.textContent = `Cố Gắng Rất Giỏi, ${player}!`;
+                sub.innerHTML = `Em đã vượt qua <strong>${stepIndex}/20</strong> nấc thang Rung Chuông Vàng. Cùng xem lại lời dặn bên dưới để lượt sau chạm đỉnh Chuông Vàng nhé!`;
+
+                if (failedQuestion) {
+                    revCard.classList.remove('hidden');
+                    revText.innerHTML = `<strong>Ở câu vừa rồi:</strong> ${failedQuestion.explain}<br><span class="text-amber-200">${failedQuestion.hint}</span>`;
+                }
+            }
+        }
+
+        let confettiAnimId = null;
+        let confettiList = [];
+
+        function resizeConfettiCanvas() {
+            const c = document.getElementById('confettiCanvas');
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfettiCanvas);
+
+        function startConfetti() {
+            resizeConfettiCanvas();
+            const c = document.getElementById('confettiCanvas');
+            const ctx = c.getContext('2d');
+            const colors = ['#fde047', '#f59e0b', '#2dd4bf', '#38bdf8', '#fb7185', '#ffffff'];
+
+            confettiList = Array.from({ length: 130 }, () => ({
+                x: Math.random() * c.width,
+                y: Math.random() * c.height - c.height,
+                w: Math.random() * 10 + 5,
+                h: Math.random() * 6 + 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vy: Math.random() * 3.2 + 2,
+                vx: (Math.random() - 0.5) * 2.2,
+                rot: Math.random() * Math.PI * 2,
+                vRot: (Math.random() - 0.5) * 0.14
+            }));
+
+            function render() {
+                ctx.clearRect(0, 0, c.width, c.height);
+                confettiList.forEach(p => {
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    p.rot += p.vRot;
+                    if (p.y > c.height + 20) {
+                        p.y = -15;
+                        p.x = Math.random() * c.width;
+                    }
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                confettiAnimId = requestAnimationFrame(render);
+            }
+            cancelAnimationFrame(confettiAnimId);
+            render();
+        }
+
+        function stopConfetti() {
+            cancelAnimationFrame(confettiAnimId);
+            const c = document.getElementById('confettiCanvas');
+            const ctx = c.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+        }
+
+        window.onload = function () {
+            resizeConfettiCanvas();
+            refreshLobbySelections();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+rules_version = '2';
+
+// ============================================================================
+// EDU TEST AI MULTI-SCHOOL – FIREBASE STORAGE SECURITY RULES (MỤC III)
+// 1. Deny by default (Mặc định từ chối toàn bộ).
+// 2. Lưu trữ cô lập theo từng trường:
+//    - Đường dẫn chuẩn khảo thí: schools/{schoolId}/exams/{examId}/{fileName}
+//    - Đường dẫn học liệu phân hệ: {schoolId}/{module}/{documentId}/{versionId}/{filename}
+// 3. Chỉ người có quyền thuộc trường đang hoạt động và được phân công mới đọc hoặc ghi.
+// 4. Tuyệt đối KHÔNG tạo URL công khai cho đề mật (publicUrlAllowed == 'false').
+// ============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // 1. Mặc định từ chối toàn bộ đường dẫn trên Bucket (DENY BY DEFAULT)
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Các hàm kiểm tra xác thực UID, định danh đường dẫn và phân loại bảo mật
+    function isSignedIn() {
+      return request.auth != null &&
+             request.auth.uid is string &&
+             request.auth.uid.size() >= 1 &&
+             request.auth.token.email_verified == true;
+    }
+
+    function isSafePathSegment(segment) {
+      return segment is string &&
+             segment.size() >= 1 &&
+             segment.size() <= 128 &&
+             segment.matches('^[a-zA-Z0-9_\\.\\-]+$');
+    }
+
+    function isValidStorageModule(module) {
+      return module in [
+        'WORD_DOCUMENT',
+        'PDF_DOCUMENT',
+        'EXCEL_SPREADSHEET',
+        'QUESTION_IMAGE',
+        'CORPUS_MATERIAL',
+        'EXAM_DOSSIER_PACKAGE',
+        'APPRAISAL_REPORT',
+        'RESULT_ANALYSIS_REPORT'
+      ];
+    }
+
+    function isValidAccessLevel(level) {
+      return level in [
+        'SCHOOL_INTERNAL',
+        'DEPARTMENT_SCOPED',
+        'CONFIDENTIAL_EXAM',
+        'SECRET_ANSWER_KEY',
+        'LEADERSHIP_ONLY'
+      ];
+    }
+
+    function isAllowedContentType() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('application/msword') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*') ||
+             request.resource.contentType.matches('application/vnd.ms-excel') ||
+             request.resource.contentType.matches('text/csv') ||
+             request.resource.contentType.matches('text/plain') ||
+             request.resource.contentType.matches('application/zip') ||
+             request.resource.contentType.matches('image/(png|jpeg|jpg|webp|svg\\+xml)');
+    }
+
+    function isWithinSizeLimit() {
+      return request.resource.size > 0 && request.resource.size <= 15 * 1024 * 1024;
+    }
+
+    // Kiểm tra người dùng có thuộc đúng trường (schoolId) và trường đang ACTIVE hay không
+    // Không tin tưởng schoolId do client tự gửi mà không khớp với token/metadata
+    function hasActiveSchoolAccessInStorage(schoolId) {
+      return isSignedIn() &&
+             request.auth.token.schoolId == schoolId &&
+             request.auth.token.schoolStatus == 'ACTIVE' &&
+             request.auth.token.membershipStatus == 'ACTIVE';
+    }
+
+    // Kiểm tra quyền đọc đối tượng lưu trữ (Chặn tuyệt đối Super Admin & School Admin đọc đề mật khi không có quyền chuyên môn)
+    function canReadStorageObject(schoolId) {
+      return hasActiveSchoolAccessInStorage(schoolId) &&
+             resource != null &&
+             resource.metadata.schoolId == schoolId && (
+               resource.metadata.accessLevel == 'SCHOOL_INTERNAL' ||
+               (resource.metadata.accessLevel == 'DEPARTMENT_SCOPED' &&
+                (resource.metadata.uploadedBy == request.auth.uid ||
+                 request.auth.token.departmentId == resource.metadata.departmentId ||
+                 request.auth.token.role in ['PRINCIPAL', 'VICE_PRINCIPAL'])) ||
+               (resource.metadata.accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY', 'LEADERSHIP_ONLY'] &&
+                resource.metadata.publicUrlAllowed == 'false' && (
+                  resource.metadata.uploadedBy == request.auth.uid ||
+                  ('assignedUserIdsCsv' in resource.metadata &&
+                   resource.metadata.assignedUserIdsCsv.matches('.*,' + request.auth.uid + ',.*')) ||
+                  (request.auth.token.role in ['PRINCIPAL', 'VICE_PRINCIPAL'] &&
+                   request.auth.token.canReadConfidentialExam == true)
+                ))
+             );
+    }
+
+    // 3A. Đường dẫn chuẩn theo Mục III: schools/{schoolId}/exams/{examId}/{fileName}
+    match /schools/{schoolId}/exams/{examId}/{fileName} {
+      allow get: if isSafePathSegment(schoolId) &&
+                 isSafePathSegment(examId) &&
+                 isSafePathSegment(fileName) &&
+                 canReadStorageObject(schoolId);
+
+      // Cấm liệt kê hàng loạt (list) hoặc tạo URL công khai cho đề mật
+      allow list: if false;
+
+      allow create: if hasActiveSchoolAccessInStorage(schoolId) &&
+                    isSafePathSegment(schoolId) &&
+                    isSafePathSegment(examId) &&
+                    isSafePathSegment(fileName) &&
+                    isWithinSizeLimit() &&
+                    isAllowedContentType() &&
+                    request.resource.metadata.schoolId == schoolId &&
+                    request.resource.metadata.examId == examId &&
+                    request.resource.metadata.uploadedBy == request.auth.uid &&
+                    isValidAccessLevel(request.resource.metadata.accessLevel) &&
+                    // Mục III: Không tạo URL công khai cho đề mật
+                    (!(request.resource.metadata.accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY']) ||
+                     request.resource.metadata.publicUrlAllowed == 'false');
+
+      allow update: if hasActiveSchoolAccessInStorage(schoolId) &&
+                    resource != null &&
+                    resource.metadata.status != 'LOCKED' &&
+                    resource.metadata.status != 'APPROVED' &&
+                    resource.metadata.uploadedBy == request.auth.uid &&
+                    isWithinSizeLimit() &&
+                    isAllowedContentType() &&
+                    request.resource.metadata.schoolId == resource.metadata.schoolId &&
+                    request.resource.metadata.examId == resource.metadata.examId &&
+                    request.resource.metadata.uploadedBy == resource.metadata.uploadedBy &&
+                    (!(request.resource.metadata.accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY']) ||
+                     request.resource.metadata.publicUrlAllowed == 'false');
+
+      allow delete: if false;
+    }
+
+    // 3B. Đường dẫn phân hệ mở rộng: {schoolId}/{module}/{documentId}/{versionId}/{filename}
+    match /{schoolId}/{module}/{documentId}/{versionId}/{filename} {
+      allow get: if isSafePathSegment(schoolId) &&
+                 isSafePathSegment(module) &&
+                 isValidStorageModule(module) &&
+                 isSafePathSegment(documentId) &&
+                 isSafePathSegment(versionId) &&
+                 canReadStorageObject(schoolId);
+
+      allow list: if false;
+
+      allow create: if hasActiveSchoolAccessInStorage(schoolId) &&
+                    isSafePathSegment(schoolId) &&
+                    isSafePathSegment(module) &&
+                    isValidStorageModule(module) &&
+                    isSafePathSegment(documentId) &&
+                    isSafePathSegment(versionId) &&
+                    isWithinSizeLimit() &&
+                    isAllowedContentType() &&
+                    request.resource.metadata.schoolId == schoolId &&
+                    request.resource.metadata.module == module &&
+                    request.resource.metadata.documentId == documentId &&
+                    request.resource.metadata.versionId == versionId &&
+                    request.resource.metadata.uploadedBy == request.auth.uid &&
+                    isValidAccessLevel(request.resource.metadata.accessLevel) &&
+                    (!(request.resource.metadata.accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY']) ||
+                     request.resource.metadata.publicUrlAllowed == 'false');
+
+      allow update: if hasActiveSchoolAccessInStorage(schoolId) &&
+                    resource != null &&
+                    resource.metadata.status != 'LOCKED' &&
+                    resource.metadata.status != 'APPROVED' &&
+                    resource.metadata.uploadedBy == request.auth.uid &&
+                    isWithinSizeLimit() &&
+                    isAllowedContentType() &&
+                    request.resource.metadata.schoolId == resource.metadata.schoolId &&
+                    request.resource.metadata.documentId == resource.metadata.documentId &&
+                    request.resource.metadata.uploadedBy == resource.metadata.uploadedBy &&
+                    (!(request.resource.metadata.accessLevel in ['CONFIDENTIAL_EXAM', 'SECRET_ANSWER_KEY']) ||
+                     request.resource.metadata.publicUrlAllowed == 'false');
+
+      allow delete: if false;
+    }
+  }
+}
