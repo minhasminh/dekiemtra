@@ -46,7 +46,9 @@ git remote add origin https://github.com/<tai-khoan>/<ten-repo>.git
 git push -u origin main
 ```
 
-## Triển khai AutoDeploy trên Hosting
+## Triển khai AutoDeploy trên Hosting (cPanel / CloudLinux Node.js)
+
+> **Quan trọng:** EDU TEST AI là ứng dụng **Full-Stack (React + Express Backend)**. Không triển khai dạng web tĩnh (GitHub Pages hoặc chỉ chép `dist/` vào `public_html`), vì mọi yêu cầu đăng nhập (`/api/auth/login`) và dữ liệu (`/api/*`) đều cần máy chủ Node.js chạy.
 
 1. **Chọn Runtime**: Node.js 22 hoặc Node.js 24 (`engines.node >= 22.18.0`).
 2. **Xác thực GitHub cho AutoDeploy** (tránh lỗi `could not read Username for 'https://github.com'`):
@@ -54,5 +56,11 @@ git push -u origin main
    - Hoặc dùng **HTTPS + Personal Access Token (quyền `repo`)**: `https://x-access-token:<TOKEN>@github.com/<tai-khoan>/<ten-repo>.git`.
 3. **Lệnh Build & Start**:
    - Build command: `npm install && npm run build`
-   - Start command: `npm start`
-4. **Biến môi trường (Environment Variables)**: Khai báo `NODE_ENV=production`, `GEMINI_API_KEY`, `APP_RUNTIME_ENV=PRODUCTION`, `VITE_APP_RUNTIME_ENV=PRODUCTION` trong cấu hình của hosting.
+   - Start command: `npm start` (hoặc **Application startup file**: `app.js` / `server.ts` trên CloudLinux Node.js Selector)
+   - Kiểm tra máy chủ đã chạy: mở `https://<ten-mien-cua-ban>/api/health` — phải trả về `{"ok":true,"status":"healthy",...}`.
+4. **Biến môi trường (Environment Variables)**:
+   - Khai báo `NODE_ENV=production`, `GEMINI_API_KEY`, `APP_RUNTIME_ENV=PRODUCTION`, `VITE_APP_RUNTIME_ENV=PRODUCTION`.
+   - Tuỳ chọn `DATA_DIR` để chỉ định thư mục lưu dữ liệu ngoài `releases/` (mặc định máy chủ tự động nhận diện thư mục `shared-data` song song với `releases/` khi deploy bằng AutoDeploy).
+5. **Đăng nhập Google / Firebase trên tên miền mới**:
+   - Vào **Firebase Console → Authentication → Settings → Authorized domains** và thêm tên miền hosting của bạn (ví dụ `tenmiencuaban.edu.vn`) để bật đăng nhập Google và kết nối Firebase Auth từ trình duyệt.
+

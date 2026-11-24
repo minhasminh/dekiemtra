@@ -26,6 +26,34 @@ const DEFAULT_BRANDING_FALLBACK: SchoolBrandingConfig = {
   updatedBy: 'Hệ thống',
 };
 
+function resolveApiUrl(apiPath: string): string {
+  try {
+    const rawBase = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+      ?.VITE_API_BASE_URL;
+    const cleaned = String(rawBase || '')
+      .trim()
+      .replace(/\/+$/, '');
+    if (cleaned) {
+      return `${cleaned}${apiPath.startsWith('/') ? apiPath : `/${apiPath}`}`;
+    }
+  } catch {
+    // fallback same-origin
+  }
+  return apiPath;
+}
+
+async function parseJsonOrNull(res: Response): Promise<Record<string, unknown> | null> {
+  const ct = String(res.headers.get('content-type') || '').toLowerCase();
+  if (!ct.includes('application/json')) {
+    return null;
+  }
+  try {
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 export interface AuthActionOutcome {
   ok: boolean;
   noticeCode?: AuthNoticeCode;
@@ -85,18 +113,19 @@ export function clearStoredSessionToken(): void {
 
 export async function fetchSchoolBranding(): Promise<SchoolBrandingConfig> {
   try {
-    const res = await fetch('/api/auth/branding');
+    const res = await fetch(resolveApiUrl('/api/auth/branding'));
     if (res.ok) {
-      const data = await res.json();
+      const data = await parseJsonOrNull(res);
       if (data?.branding) {
+        const branding = data.branding as SchoolBrandingConfig;
         const normalizedBranding: SchoolBrandingConfig = {
-          ...data.branding,
+          ...branding,
           academicYear:
-            !data.branding.academicYear ||
-            String(data.branding.academicYear).includes('2024') ||
-            String(data.branding.academicYear).includes('2025')
+            !branding.academicYear ||
+            String(branding.academicYear).includes('2024') ||
+            String(branding.academicYear).includes('2025')
               ? '2026 - 2027'
-              : data.branding.academicYear,
+              : branding.academicYear,
         };
         try {
           localStorage.setItem(CACHED_BRANDING_STORAGE_KEY, JSON.stringify(normalizedBranding));
@@ -203,7 +232,7 @@ export async function loginWithCredentials(params: {
   }
 
   try {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(resolveApiUrl('/api/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -213,22 +242,30 @@ export async function loginWithCredentials(params: {
       }),
     });
 
-    const data = await res.json();
-    if (res.ok && data?.ok && data?.session) {
+    const data = await parseJsonOrNull(res);
+    if (!data) {
+      return {
+        ok: false,
+        noticeCode: 'NETWORK_DISCONNECTED',
+        message: `Máy chủ Backend API (/api/auth/login) chưa chạy hoặc hosting đang phục vụ bản tĩnh (HTTP ${res.status}). Hãy khởi chạy ứng dụng Node.js (server.ts hoặc app.js) trên hosting thay vì chỉ xuất thư mục dist/.`,
+      };
+    }
+
+    if (res.ok && data.ok && data.session) {
       const session = data.session as AuthenticatedUserSession;
       saveSessionToken(session.sessionToken, Boolean(params.rememberMe));
       return {
         ok: true,
-        message: data.message || 'Đăng nhập thành công.',
+        message: String(data.message || 'Đăng nhập thành công.'),
         session,
       };
     }
 
     return {
       ok: false,
-      noticeCode: (data?.noticeCode as AuthNoticeCode) || 'INVALID_CREDENTIALS',
+      noticeCode: (data.noticeCode as AuthNoticeCode) || 'INVALID_CREDENTIALS',
       message:
-        data?.message ||
+        String(data.message || '') ||
         'Thông tin đăng nhập (Email/Tên đăng nhập hoặc Mật khẩu) không chính xác. Vui lòng kiểm tra lại.',
     };
   } catch {
@@ -236,7 +273,7 @@ export async function loginWithCredentials(params: {
       ok: false,
       noticeCode: 'NETWORK_DISCONNECTED',
       message:
-        'Mất kết nối mạng. Không thể kết nối tới máy chủ xác thực EDU TEST AI. Vui lòng kiểm tra đường truyền Internet và thử lại.',
+        'Không thể kết nối tới máy chủ Backend EDU TEST AI (/api/auth/login). Vui lòng kiểm tra ứng dụng Node.js trên hosting đã khởi chạy và đường truyền mạng ổn định.',
     };
   }
 }
@@ -309,21 +346,23 @@ export async function restoreAuthSession(): Promise<AuthenticatedUserSession | n
   if (!token) return null;
 
   try {
-    const res = await fetch('/api/auth/session', {
+    const res = await fetch(resolveApiUrl('/api/auth/session'), {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
       clearStoredSessionToken();
       return null;
     }
-    const data = await res.json();
+    if (!res.ok) {
+      return null;
+    }
+    const data = await parseJsonOrNull(res);
     if (data?.ok && data?.session) {
       return data.session as AuthenticatedUserSession;
     }
-    clearStoredSessionToken();
     return null;
   } catch {
     return null;

@@ -10,14 +10,51 @@ import http from 'http';
 import https from 'https';
 import { createWorker, OEM, type Worker as TesseractWorker } from 'tesseract.js';
 import { AsyncLocalStorage } from 'async_hooks';
+import { fileURLToPath } from 'url';
 
+const APP_ROOT_DIR = (() => {
+  try {
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    return process.cwd();
+  }
+})();
+
+dotenv.config({ path: path.join(APP_ROOT_DIR, '.env') });
 dotenv.config();
 
-const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+function resolveWritableDataDir(): string {
+  const candidates: string[] = [];
+  if (process.env.DATA_DIR && process.env.DATA_DIR.trim()) {
+    candidates.push(path.resolve(process.env.DATA_DIR.trim()));
+  }
+  // Khi triển khai bằng AutoDeploy dạng .../deployments/<id>/releases/<releaseName>,
+  // tự động dùng thư mục dùng chung .../deployments/<id>/shared-data để giữ bền vững tài khoản & dữ liệu qua các bản deploy
+  const releaseMarker = `${path.sep}releases${path.sep}`;
+  const releaseIdx = APP_ROOT_DIR.indexOf(releaseMarker);
+  if (releaseIdx > 0) {
+    const deploymentRoot = APP_ROOT_DIR.slice(0, releaseIdx);
+    candidates.push(path.join(deploymentRoot, 'shared-data'));
+  }
+  candidates.push(path.resolve(APP_ROOT_DIR, 'uploads'));
+  candidates.push(path.resolve(process.cwd(), 'uploads'));
+  candidates.push(path.join(os.tmpdir(), 'edutest-ai-uploads'));
+
+  for (const dir of candidates) {
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch {
+      // Thử thư mục dự phòng tiếp theo nếu thư mục phát hành chỉ có quyền đọc
+    }
+  }
+  return path.join(os.tmpdir(), 'edutest-ai-uploads');
 }
 
+const UPLOAD_DIR = resolveWritableDataDir();
 const MULTITENANT_DB_FILE = path.join(UPLOAD_DIR, 'edutest_multitenant_db.json');
 
 const MAX_QUESTIONS_PER_BATCH = 15;
@@ -233,7 +270,34 @@ const QUESTION_DRAFT_ITEM_SCHEMA = {
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  app.set('trust proxy', 1);
+  const rawPort = process.env.PORT ? String(process.env.PORT).trim() : '';
+  const PORT: number | string = rawPort ? (/^\d+$/.test(rawPort) ? Number(rawPort) : rawPort) : 3000;
+
+  // Hỗ trợ tách riêng Frontend/Backend bằng danh sách miền tin cậy ALLOWED_ORIGINS (không dùng wildcard *)
+  const allowedOrigins = new Set(
+    String(process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.has(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Actor-Id, X-Actor-Role, X-School-Id, X-Requested-With'
+      );
+      if (req.method === 'OPTIONS') {
+        res.status(204).end();
+        return;
+      }
+    }
+    next();
+  });
 
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -3707,7 +3771,11 @@ ${Array.isArray(extractedFormulas) && extractedFormulas.length > 0 ? `\n[CÔNG T
       } catch {
         // ignore cleanup error
       }
-      fs.writeFileSync(MULTITENANT_DB_FILE, serialized, 'utf8');
+      try {
+        fs.writeFileSync(MULTITENANT_DB_FILE, serialized, 'utf8');
+      } catch (writeErr) {
+        console.error('Warning: Unable to persist multitenant DB to disk:', writeErr);
+      }
     }
     cachedMultiTenantDb = dbData;
     try {
@@ -8495,6 +8563,74 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
 
   const enhancedAuthSessions = new Map<string, ServerAuthSessionEntry>();
 
+  function hydratePersistedAuthSessions(dbObj: unknown) {
+    const persisted = (dbObj as { persistedAuthSessions?: Record<string, ServerAuthSessionEntry> })
+      ?.persistedAuthSessions;
+    if (!persisted || typeof persisted !== 'object') return;
+    const nowMs = Date.now();
+    for (const [tok, sess] of Object.entries(persisted)) {
+      if (!sess || !sess.userId || !sess.expiresAt) continue;
+      if (new Date(sess.expiresAt).getTime() <= nowMs) continue;
+      if (!enhancedAuthSessions.has(tok)) {
+        enhancedAuthSessions.set(tok, sess);
+      }
+      if (!activeSessions.has(tok)) {
+        activeSessions.set(tok, {
+          userId: sess.userId,
+          schoolId: sess.schoolId,
+          issuedAt: sess.issuedAt,
+        });
+      }
+    }
+  }
+
+  function persistEnhancedAuthSession(token: string, entry: ServerAuthSessionEntry) {
+    enhancedAuthSessions.set(token, entry);
+    activeSessions.set(token, {
+      userId: entry.userId,
+      schoolId: entry.schoolId,
+      issuedAt: entry.issuedAt,
+    });
+    const dbAny = multiTenantDb as Record<string, unknown>;
+    const store = (
+      dbAny.persistedAuthSessions && typeof dbAny.persistedAuthSessions === 'object'
+        ? dbAny.persistedAuthSessions
+        : {}
+    ) as Record<string, ServerAuthSessionEntry>;
+    const nowMs = Date.now();
+    for (const [k, v] of Object.entries(store)) {
+      if (!v?.expiresAt || new Date(v.expiresAt).getTime() <= nowMs) {
+        delete store[k];
+      }
+    }
+    store[token] = entry;
+    dbAny.persistedAuthSessions = store;
+    saveMultiTenantDb(multiTenantDb);
+  }
+
+  function removePersistedAuthSession(token: string) {
+    enhancedAuthSessions.delete(token);
+    activeSessions.delete(token);
+    const dbAny = multiTenantDb as Record<string, unknown>;
+    const store = dbAny.persistedAuthSessions as Record<string, ServerAuthSessionEntry> | undefined;
+    if (store && token in store) {
+      delete store[token];
+      saveMultiTenantDb(multiTenantDb);
+    }
+  }
+
+  function lookupEnhancedAuthSession(token: string): ServerAuthSessionEntry | undefined {
+    if (!token) return undefined;
+    let sess = enhancedAuthSessions.get(token);
+    if (!sess) {
+      hydratePersistedAuthSessions(multiTenantDb);
+      sess = enhancedAuthSessions.get(token);
+    }
+    return sess;
+  }
+
+  hydratePersistedAuthSessions(multiTenantDb);
+
   function ensureBrandingStore() {
     const dbAny = multiTenantDb as Record<string, unknown>;
     if (!dbAny.schoolBranding) {
@@ -10198,7 +10334,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       expiresAt,
     });
 
-    enhancedAuthSessions.set(sessionToken, {
+    persistEnhancedAuthSession(sessionToken, {
       sessionToken,
       userId: user.id,
       schoolId: user.schoolId,
@@ -10207,11 +10343,6 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       rememberMe: Boolean(rememberMe),
       issuedAt: nowIso,
       expiresAt,
-    });
-    activeSessions.set(sessionToken, {
-      userId: user.id,
-      schoolId: user.schoolId,
-      issuedAt: nowIso,
     });
     if (user.schoolId && user.schoolId !== 'PLATFORM') {
       currentActiveSessionSchoolId = user.schoolId;
@@ -10264,7 +10395,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
 
     const token = authHeader.slice(7).trim();
-    const sess = enhancedAuthSessions.get(token);
+    const sess = lookupEnhancedAuthSession(token);
     if (!sess) {
       res.status(401).json({
         ok: false,
@@ -10276,8 +10407,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
 
     if (new Date(sess.expiresAt).getTime() < Date.now()) {
-      enhancedAuthSessions.delete(token);
-      activeSessions.delete(token);
+      removePersistedAuthSession(token);
       res.status(401).json({
         ok: false,
         authenticated: false,
@@ -10289,8 +10419,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
 
     const user = multiTenantDb.collections.Users.find((u: { id: string }) => u.id === sess.userId);
     if (!user || user.status !== 'ACTIVE') {
-      enhancedAuthSessions.delete(token);
-      activeSessions.delete(token);
+      removePersistedAuthSession(token);
       res.status(403).json({
         ok: false,
         authenticated: false,
@@ -10329,7 +10458,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     ensureSpecialTestAccountsInDb();
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-    const sess = enhancedAuthSessions.get(token);
+    const sess = lookupEnhancedAuthSession(token);
     if (!sess) {
       res.status(401).json({
         ok: false,
@@ -10364,6 +10493,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     if (multiRoleMode === 'SELECT_WORKING_ROLE' || multiRoleMode === 'COMBINED_PERMISSIONS') {
       sess.multiRoleMode = multiRoleMode;
     }
+    persistEnhancedAuthSession(token, sess);
 
     const updatedPayload = buildAuthSessionResponse({
       user,
@@ -10434,7 +10564,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7).trim();
-      const sess = enhancedAuthSessions.get(token);
+      const sess = lookupEnhancedAuthSession(token);
       if (sess) {
         const user = multiTenantDb.collections.Users.find((u: { id: string }) => u.id === sess.userId);
         if (user) {
@@ -10452,8 +10582,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
           });
         }
       }
-      enhancedAuthSessions.delete(token);
-      activeSessions.delete(token);
+      removePersistedAuthSession(token);
     }
 
     res.status(200).json({
@@ -10465,6 +10594,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
 
   // 8. Kiểm tra bảo vệ đường dẫn đối với người chưa đăng nhập (Mục V - Protected Route Guard)
   app.get('/api/auth/protected-check', (req, res) => {
+    multiTenantDb = loadMultiTenantDb();
     const authHeader = req.headers.authorization;
     const targetRoute = String(req.query.route || '/executive-dashboard');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -10481,7 +10611,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
 
     const token = authHeader.slice(7).trim();
-    const sess = enhancedAuthSessions.get(token);
+    const sess = lookupEnhancedAuthSession(token);
     if (!sess) {
       res.status(401).json({
         ok: false,
@@ -54577,11 +54707,15 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
   );
 
-  const distDir = path.resolve(process.cwd(), 'dist');
+  const distDir = path.resolve(APP_ROOT_DIR, 'dist');
   const distIndexHtml = path.join(distDir, 'index.html');
+  const isDevLifecycle =
+    process.env.npm_lifecycle_event === 'dev' ||
+    process.env.NODE_ENV === 'development' ||
+    process.env.DISABLE_HMR === 'true';
   const isProductionServer =
     process.env.NODE_ENV === 'production' ||
-    (process.env.npm_lifecycle_event === 'start' && fs.existsSync(distIndexHtml));
+    (!isDevLifecycle && fs.existsSync(distIndexHtml));
 
   if (!isProductionServer) {
     const { createServer: createViteServer } = await import('vite');
@@ -54606,9 +54740,15 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`EDU TEST AI Server running on http://localhost:${PORT}`);
-  });
+  if (typeof PORT === 'number') {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`EDU TEST AI Server running on http://localhost:${PORT}`);
+    });
+  } else {
+    app.listen(PORT, () => {
+      console.log(`EDU TEST AI Server running on socket ${PORT}`);
+    });
+  }
 }
 
 startServer();
