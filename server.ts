@@ -10404,6 +10404,205 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     });
   });
 
+  // 3B. Đăng nhập bằng Google thông qua Firebase Authentication (Xác thực ID Token trực tiếp với Google Identity Toolkit)
+  app.post('/api/auth/firebase-google-session', async (req, res) => {
+    const idToken = typeof req.body?.idToken === 'string' ? req.body.idToken.trim() : '';
+    const rememberMe = req.body?.rememberMe !== false;
+
+    if (!idToken || idToken.length < 40) {
+      res.status(400).json({
+        ok: false,
+        noticeCode: 'INVALID_CREDENTIALS',
+        message: 'Thiếu mã xác thực Firebase ID Token hợp lệ.',
+      });
+      return;
+    }
+
+    let firebaseWebApiKey = String(process.env.VITE_FIREBASE_API_KEY || '').trim();
+    if (!firebaseWebApiKey) {
+      try {
+        const cfgPath = path.join(APP_ROOT_DIR, 'firebase-applet-config.json');
+        if (fs.existsSync(cfgPath)) {
+          const parsedCfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+          firebaseWebApiKey = String(parsedCfg?.apiKey || '').trim();
+        }
+      } catch {
+        // ignore config read error
+      }
+    }
+
+    if (!firebaseWebApiKey) {
+      res.status(503).json({
+        ok: false,
+        noticeCode: 'NETWORK_DISCONNECTED',
+        message: 'Máy chủ chưa có cấu hình Firebase Web SDK để xác thực phiên Google.',
+      });
+      return;
+    }
+
+    let verifiedEmail = '';
+    let verifiedUid = '';
+    let verifiedDisplayName = '';
+    try {
+      const lookupRes = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseWebApiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        }
+      );
+      const lookupJson = (await lookupRes.json().catch(() => null)) as {
+        users?: Array<{
+          localId?: string;
+          email?: string;
+          emailVerified?: boolean;
+          displayName?: string;
+          disabled?: boolean;
+        }>;
+      } | null;
+      const fbUser = Array.isArray(lookupJson?.users) ? lookupJson.users[0] : null;
+      if (!lookupRes.ok || !fbUser || !fbUser.email || fbUser.disabled) {
+        res.status(401).json({
+          ok: false,
+          noticeCode: 'INVALID_CREDENTIALS',
+          message: 'Phiên đăng nhập Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.',
+        });
+        return;
+      }
+      if (fbUser.emailVerified === false) {
+        res.status(403).json({
+          ok: false,
+          noticeCode: 'ACCOUNT_NOT_ACTIVATED',
+          message: 'Email tài khoản Google của bạn chưa được xác minh.',
+        });
+        return;
+      }
+      verifiedEmail = String(fbUser.email).trim().toLowerCase();
+      verifiedUid = String(fbUser.localId || '').trim();
+      verifiedDisplayName = String(fbUser.displayName || '').trim();
+    } catch {
+      res.status(502).json({
+        ok: false,
+        noticeCode: 'NETWORK_DISCONNECTED',
+        message: 'Không thể kết nối máy chủ xác thực Google Firebase. Vui lòng thử lại.',
+      });
+      return;
+    }
+
+    multiTenantDb = loadMultiTenantDb();
+    ensureSpecialTestAccountsInDb();
+    const now = new Date();
+    const nowIso = now.toISOString();
+
+    const foundLookup = findUserByIdentifierSafelyOnBackend(verifiedEmail);
+    let activeUser = foundLookup.user;
+
+    if (activeUser && (activeUser.status === 'DISABLED' || activeUser.status === 'LOCKED')) {
+      res.status(403).json({
+        ok: false,
+        noticeCode: 'ACCOUNT_DISABLED',
+        message:
+          'Tài khoản này đã bị vô hiệu hóa hoặc tạm khóa. Vui lòng liên hệ Quản trị viên hệ thống của nhà trường.',
+      });
+      return;
+    }
+
+    if (!activeUser) {
+      // Nếu email Google đã xác minh chưa có trong danh sách sẵn, cấp hồ sơ Giáo viên cơ bản để sử dụng hệ thống an toàn
+      const newUsername = verifiedEmail.split('@')[0].replace(/[^a-z0-9._-]/gi, '') || 'teacher';
+      const fbPwdHash = hashPasswordPBKDF2(
+        crypto.randomBytes(24).toString('hex'),
+        `salt_fb_${Date.now()}`
+      );
+      const createdUser = {
+        id: `user-fb-${verifiedUid || Date.now()}`,
+        schoolId: 'SCHOOL_A',
+        username: newUsername,
+        email: verifiedEmail,
+        fullName: verifiedDisplayName || newUsername,
+        positionTitle: 'Giáo viên',
+        passwordHashAlgorithm: 'PBKDF2-SHA256-100000',
+        passwordHashFull: fbPwdHash.fullHash,
+        passwordHashPreview: fbPwdHash.preview,
+        roles: ['TEACHER'],
+        departmentName: 'Tổ Chuyên môn',
+        assignedSubjects: ['Toán', 'Tin học'],
+        assignedGrades: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        assignedSecretExamIds: [] as string[],
+        createdBy: 'firebase-google-auth',
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        status: 'ACTIVE',
+        lastLoginAt: nowIso,
+        loginHistory: [] as Record<string, unknown>[],
+      };
+      multiTenantDb.collections.Users.push(createdUser);
+      activeUser = createdUser;
+    }
+
+    const ttlMs = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000;
+    const expiresAt = new Date(now.getTime() + ttlMs).toISOString();
+    const sessionToken = `edutest_auth_${crypto.randomBytes(24).toString('hex')}`;
+
+    const sessionPayload = buildAuthSessionResponse({
+      user: activeUser,
+      sessionToken,
+      rememberMe,
+      mappedFromUsername: false,
+      issuedAt: nowIso,
+      expiresAt,
+    });
+
+    persistEnhancedAuthSession(sessionToken, {
+      sessionToken,
+      userId: activeUser.id,
+      schoolId: activeUser.schoolId,
+      activeRole: sessionPayload.user.activeRole,
+      multiRoleMode: sessionPayload.user.multiRoleMode,
+      rememberMe,
+      issuedAt: nowIso,
+      expiresAt,
+    });
+    if (activeUser.schoolId && activeUser.schoolId !== 'PLATFORM') {
+      currentActiveSessionSchoolId = activeUser.schoolId;
+    }
+
+    activeUser.lastLoginAt = nowIso;
+    activeUser.updatedAt = nowIso;
+    if (!Array.isArray(activeUser.loginHistory)) {
+      activeUser.loginHistory = [];
+    }
+    activeUser.loginHistory.unshift({
+      id: `lh-${Date.now()}`,
+      timestamp: nowIso,
+      ipOrClient: 'Trình duyệt EDU TEST AI (Google Firebase)',
+      authMethod: 'FIREBASE_GOOGLE_OAUTH',
+      status: 'SUCCESS',
+      note: `Đăng nhập thành công bằng Google (${verifiedEmail}).`,
+    });
+
+    appendAuditLog({
+      schoolId: activeUser.schoolId,
+      actorUserId: activeUser.id,
+      actorName: activeUser.fullName,
+      actorRoles: activeUser.roles,
+      action: 'LOGIN',
+      targetType: 'AUTH_SESSION',
+      targetId: activeUser.id,
+      summary: `Đăng nhập thành công qua Google Firebase: ${activeUser.fullName} (${verifiedEmail}).`,
+      httpStatus: 200,
+      status: 'ALLOWED',
+    });
+
+    res.status(200).json({
+      ok: true,
+      session: sessionPayload,
+      branding: ensureBrandingStore(),
+      message: 'Đăng nhập bằng tài khoản Google thành công.',
+    });
+  });
+
   // 4. Khôi phục phiên đăng nhập khi tải lại trang (Mục I.3 & Mục V - Tải lại trang)
   app.get('/api/auth/session', (req, res) => {
     multiTenantDb = loadMultiTenantDb();

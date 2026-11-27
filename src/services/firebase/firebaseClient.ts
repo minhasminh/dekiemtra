@@ -774,6 +774,28 @@ export async function signOutFirebase(): Promise<void> {
   await signOut(auth);
 }
 
+export function waitForFirebaseAuthUser(timeoutMs = 2500): Promise<FirebaseUser | null> {
+  if (auth.currentUser) {
+    return Promise.resolve(auth.currentUser);
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (user: FirebaseUser | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      unsubscribe();
+      resolve(user);
+    };
+    const timer = setTimeout(() => finish(auth.currentUser), timeoutMs);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => finish(user),
+      () => finish(null)
+    );
+  });
+}
+
 export interface FirebaseProviderCheckResult {
   hasFirebaseUser: boolean;
   uid: string | null;

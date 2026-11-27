@@ -22,6 +22,7 @@ import {
 } from '../types/domain';
 import {
   loginWithCredentials,
+  loginWithGoogleFirebase,
   requestSafePasswordReset,
   clearStoredSessionToken,
   resolveApiUrl,
@@ -70,6 +71,7 @@ export const EduTestLoginWorkspace: React.FC<EduTestLoginWorkspaceProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
   const [errorBanner, setErrorBanner] = useState<{
     code: string;
@@ -201,6 +203,87 @@ export const EduTestLoginWorkspace: React.FC<EduTestLoginWorkspaceProps> = ({
       onLoginSuccess(session);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorBanner(null);
+    setIsGoogleSubmitting(true);
+    try {
+      const result = await loginWithGoogleFirebase(rememberMe);
+      if (!result.ok || !result.session) {
+        setErrorBanner({
+          code: result.noticeCode || 'LOGIN_FAILED',
+          message: result.message || 'Không thể đăng nhập bằng tài khoản Google.',
+        });
+        return;
+      }
+
+      const session = result.session;
+      if (session.authProvider === 'FIREBASE_GOOGLE_DIRECT') {
+        onLoginSuccess(session);
+        return;
+      }
+
+      const primaryRole = normalizeToPrimaryRoleKey(
+        session.user.activeRole,
+        session.user.email,
+        session.user.username,
+        session.user.positionTitle
+      );
+      if (primaryRole === 'SUPER_ADMIN') {
+        onLoginSuccess(session);
+        return;
+      }
+
+      try {
+        const verifyRes = await fetch(resolveApiUrl('/api/stage22/auth/context'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session.sessionToken
+              ? { Authorization: `Bearer ${session.sessionToken}` }
+              : {}),
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+            email: session.user.email,
+            username: session.user.username,
+          }),
+        });
+        if (verifyRes.ok) {
+          const ctxData = await verifyRes.json();
+          const memberships: AuthorizedSchoolMembership[] = Array.isArray(ctxData?.memberships)
+            ? ctxData.memberships
+            : [];
+          if (memberships.length > 1) {
+            setPendingSession(session);
+            setAuthorizedSchools(memberships);
+            setSchoolVerificationStep('MULTI_SCHOOL_SELECT');
+            return;
+          }
+          if (memberships.length === 1) {
+            const singleSchool = memberships[0];
+            onLoginSuccess(
+              {
+                ...session,
+                user: {
+                  ...session.user,
+                  schoolId: singleSchool.schoolId,
+                },
+              },
+              singleSchool
+            );
+            return;
+          }
+        }
+      } catch {
+        // Fallback dùng thông tin trường mặc định của phiên
+      }
+
+      onLoginSuccess(session);
+    } finally {
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -516,7 +599,7 @@ export const EduTestLoginWorkspace: React.FC<EduTestLoginWorkspaceProps> = ({
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isGoogleSubmitting}
               className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
@@ -532,6 +615,53 @@ export const EduTestLoginWorkspace: React.FC<EduTestLoginWorkspaceProps> = ({
               )}
             </button>
           </form>
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-3 text-slate-500 font-medium">
+                hoặc đăng nhập nhanh qua Firebase
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isSubmitting || isGoogleSubmitting}
+            className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-60 border border-slate-300 text-slate-800 font-semibold text-sm shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+          >
+            {isGoogleSubmitting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                <span>Đang mở cửa sổ Google...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="#4285F4"
+                    d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.4 3.63v3.01h3.88c2.27-2.09 3.54-5.17 3.54-8.88Z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.88-3.01c-1.07.72-2.45 1.15-4.05 1.15-3.12 0-5.76-2.11-6.7-4.94H1.29v3.1A11.99 11.99 0 0 0 12 24Z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.3 14.29a7.21 7.21 0 0 1 0-4.58v-3.1H1.29a12 12 0 0 0 0 10.78l4.01-3.1Z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.77c1.76 0 3.34.61 4.58 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A11.99 11.99 0 0 0 1.29 6.61l4.01 3.1c.94-2.83 3.58-4.94 6.7-4.94Z"
+                  />
+                </svg>
+                <span>Đăng nhập bằng Google</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

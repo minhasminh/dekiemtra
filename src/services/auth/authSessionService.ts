@@ -7,7 +7,13 @@ import {
   SchoolStaffDirectoryEntry,
   WorkflowActorRole,
 } from '../../types/domain';
-import { executeFirebaseSendPasswordResetEmailNeutral } from '../firebase/firebaseClient';
+import {
+  executeFirebaseSendPasswordResetEmailNeutral,
+  signInWithGoogleFirebase,
+  signOutFirebase,
+  waitForFirebaseAuthUser,
+  type FirebaseUser,
+} from '../firebase/firebaseClient';
 
 const PERSISTENT_SESSION_TOKEN_KEY = 'edutest_auth_persistent_token_v1';
 const EPHEMERAL_SESSION_TOKEN_KEY = 'edutest_auth_ephemeral_token_v1';
@@ -247,7 +253,7 @@ export async function loginWithCredentials(params: {
       return {
         ok: false,
         noticeCode: 'NETWORK_DISCONNECTED',
-        message: `Máy chủ Backend API (/api/auth/login) chưa chạy hoặc hosting đang phục vụ bản tĩnh (HTTP ${res.status}). Hãy khởi chạy ứng dụng Node.js (server.ts hoặc app.js) trên hosting thay vì chỉ xuất thư mục dist/.`,
+        message: `Hosting hiện đang phục vụ bản web tĩnh (chưa chạy Node.js cho /api/auth/login — HTTP ${res.status}). Hãy bấm nút "Đăng nhập bằng Google" bên dưới để vào hệ thống ngay qua Firebase, hoặc khởi chạy ứng dụng Node.js (app.js) trên hosting.`,
       };
     }
 
@@ -273,7 +279,152 @@ export async function loginWithCredentials(params: {
       ok: false,
       noticeCode: 'NETWORK_DISCONNECTED',
       message:
-        'Không thể kết nối tới máy chủ Backend EDU TEST AI (/api/auth/login). Vui lòng kiểm tra ứng dụng Node.js trên hosting đã khởi chạy và đường truyền mạng ổn định.',
+        'Không thể kết nối tới máy chủ Backend (/api/auth/login). Hãy bấm nút "Đăng nhập bằng Google" bên dưới để đăng nhập qua Firebase, hoặc kiểm tra ứng dụng Node.js trên hosting.',
+    };
+  }
+}
+
+function buildDirectFirebaseSession(
+  fbUser: FirebaseUser,
+  rememberMe: boolean
+): AuthenticatedUserSession {
+  const email = String(fbUser.email || '').trim();
+  const username = (email.split('@')[0] || 'teacher').trim();
+  const fullName = String(fbUser.displayName || username || 'Giáo viên').trim();
+  const isBootstrapPrincipal = email.toLowerCase() === 'phanducquy24@gmail.com';
+  const roles: WorkflowActorRole[] = isBootstrapPrincipal
+    ? ['SYSTEM_ADMIN', 'PRINCIPAL', 'TEACHER']
+    : ['TEACHER'];
+  const activeRole: WorkflowActorRole = isBootstrapPrincipal ? 'PRINCIPAL' : 'TEACHER';
+  const now = new Date();
+  const ttlMs = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000;
+
+  return {
+    sessionToken: `firebase_google_${fbUser.uid}`,
+    issuedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + ttlMs).toISOString(),
+    rememberMe,
+    authProvider: 'FIREBASE_GOOGLE_DIRECT',
+    usernameMappedSafelyAtBackend: false,
+    user: {
+      id: fbUser.uid,
+      schoolId: 'SCHOOL_A',
+      username,
+      email,
+      fullName,
+      positionTitle: isBootstrapPrincipal ? 'Hiệu trưởng' : 'Giáo viên',
+      roles,
+      activeRole,
+      multiRoleMode: 'SELECT_WORKING_ROLE',
+      combinedPermissions: [
+        'VIEW_DASHBOARD',
+        'MANAGE_QUESTIONS',
+        'CREATE_MATRIX',
+        'CREATE_EXAM',
+        'EXPORT_EXAM',
+      ],
+      departmentName: 'Tổ Chuyên môn',
+      assignedSubjects: ['Toán', 'Tiếng Việt', 'Khoa học tự nhiên', 'Tin học'],
+      assignedGrades: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      status: 'ACTIVE',
+    },
+    landingNavigation: {
+      role: activeRole,
+      roleDisplayName: isBootstrapPrincipal ? 'Hiệu trưởng' : 'Giáo viên bộ môn',
+      targetMenuId: 'dashboard',
+      targetPageTitle: 'Tổng quan EDU TEST AI',
+      routePath: '/dashboard',
+    },
+  };
+}
+
+export async function loginWithGoogleFirebase(rememberMe: boolean): Promise<AuthActionOutcome> {
+  if (simulateNetworkOffline || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    return {
+      ok: false,
+      noticeCode: 'NETWORK_DISCONNECTED',
+      message: 'Mất kết nối mạng. Không thể đăng nhập bằng Google Firebase lúc này.',
+    };
+  }
+
+  try {
+    const fbUser = await signInWithGoogleFirebase();
+    if (!fbUser || !fbUser.email) {
+      return {
+        ok: false,
+        noticeCode: 'INVALID_CREDENTIALS',
+        message: 'Không lấy được thông tin email hợp lệ từ tài khoản Google.',
+      };
+    }
+
+    const idToken = await fbUser.getIdToken();
+
+    // Ưu tiên trao đổi ID Token với Backend Node.js để ánh xạ đúng vai trò trong 66 tài khoản trường học
+    try {
+      const res = await fetch(resolveApiUrl('/api/auth/firebase-google-session'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, rememberMe }),
+      });
+      const data = await parseJsonOrNull(res);
+      if (data) {
+        if (res.ok && data.ok && data.session) {
+          const session = data.session as AuthenticatedUserSession;
+          saveSessionToken(session.sessionToken, Boolean(rememberMe));
+          return {
+            ok: true,
+            message: String(data.message || 'Đăng nhập bằng Google thành công.'),
+            session,
+          };
+        }
+        return {
+          ok: false,
+          noticeCode: (data.noticeCode as AuthNoticeCode) || 'INVALID_CREDENTIALS',
+          message: String(data.message || 'Không thể xác thực tài khoản Google trên hệ thống.'),
+        };
+      }
+    } catch {
+      // Nếu hosting đang ở chế độ web tĩnh (không có Backend Node.js), chuyển sang phiên Firebase Auth trực tiếp đã xác thực bởi Google
+    }
+
+    const directSession = buildDirectFirebaseSession(fbUser, rememberMe);
+    return {
+      ok: true,
+      message: 'Đăng nhập thành công qua tài khoản Google Firebase.',
+      session: directSession,
+    };
+  } catch (err: unknown) {
+    const code =
+      err && typeof err === 'object' && 'code' in err
+        ? String((err as { code?: string }).code || '')
+        : '';
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      return {
+        ok: false,
+        noticeCode: 'INVALID_CREDENTIALS',
+        message: 'Bạn đã đóng cửa sổ đăng nhập Google trước khi hoàn tất.',
+      };
+    }
+    if (code === 'auth/popup-blocked') {
+      return {
+        ok: false,
+        noticeCode: 'INVALID_CREDENTIALS',
+        message:
+          'Trình duyệt đang chặn cửa sổ bật lên (Popup). Vui lòng cho phép Popup rồi bấm lại Đăng nhập bằng Google.',
+      };
+    }
+    if (code === 'auth/unauthorized-domain') {
+      const host = typeof window !== 'undefined' ? window.location.hostname : '';
+      return {
+        ok: false,
+        noticeCode: 'NO_ACCESS_PERMISSION',
+        message: `Tên miền "${host}" chưa được cấp phép trong Firebase Authentication. Hãy vào Firebase Console → Authentication → Settings → Authorized domains và thêm "${host}".`,
+      };
+    }
+    return {
+      ok: false,
+      noticeCode: 'NETWORK_DISCONNECTED',
+      message: `Không thể đăng nhập bằng Google (${code || 'lỗi xác thực'}). Vui lòng kiểm tra kết nối mạng và thử lại.`,
     };
   }
 }
@@ -342,31 +493,38 @@ export async function loginWithServerRoleScenario(params: {
 }
 
 export async function restoreAuthSession(): Promise<AuthenticatedUserSession | null> {
-  const { token } = getStoredSessionToken();
-  if (!token) return null;
-
-  try {
-    const res = await fetch(resolveApiUrl('/api/auth/session'), {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (res.status === 401 || res.status === 403) {
-      clearStoredSessionToken();
-      return null;
+  const { token, rememberMe } = getStoredSessionToken();
+  if (token) {
+    try {
+      const res = await fetch(resolveApiUrl('/api/auth/session'), {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 401 || res.status === 403) {
+        clearStoredSessionToken();
+      } else if (res.ok) {
+        const data = await parseJsonOrNull(res);
+        if (data?.ok && data?.session) {
+          return data.session as AuthenticatedUserSession;
+        }
+      }
+    } catch {
+      // fallback kiểm tra phiên Firebase Auth bên dưới
     }
-    if (!res.ok) {
-      return null;
-    }
-    const data = await parseJsonOrNull(res);
-    if (data?.ok && data?.session) {
-      return data.session as AuthenticatedUserSession;
-    }
-    return null;
-  } catch {
-    return null;
   }
+
+  // Hỗ trợ tự khôi phục phiên Google Firebase (kể cả trên hosting web tĩnh)
+  try {
+    const fbUser = await waitForFirebaseAuthUser(1800);
+    if (fbUser && fbUser.email) {
+      return buildDirectFirebaseSession(fbUser, rememberMe || true);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
 }
 
 export async function selectWorkingRoleOrPolicy(params: {
@@ -453,6 +611,11 @@ export async function requestSafePasswordReset(identifier: string): Promise<Auth
 export async function logoutCurrentSession(): Promise<void> {
   const { token } = getStoredSessionToken();
   clearStoredSessionToken();
+  try {
+    await signOutFirebase();
+  } catch {
+    // ignore firebase signOut error
+  }
   if (!token) return;
 
   try {

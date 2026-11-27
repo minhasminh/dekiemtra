@@ -4264,7 +4264,7 @@ export interface AuthenticatedUserSession {
   issuedAt: string;
   expiresAt: string;
   rememberMe: boolean;
-  authProvider: 'FIREBASE_OR_PBKDF2_BACKEND';
+  authProvider: 'FIREBASE_OR_PBKDF2_BACKEND' | 'FIREBASE_GOOGLE_DIRECT';
   usernameMappedSafelyAtBackend: boolean;
   user: {
     id: string;
