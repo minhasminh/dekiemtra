@@ -144,7 +144,11 @@ export async function syncRuntimeEnvironmentFromBackend(params?: {
     const query = new URLSearchParams();
     if (params?.userId) query.set('userId', params.userId);
     if (params?.role) query.set('role', params.role);
-    const res = await fetch(`/api/runtime/environment-policy?${query.toString()}`, {
+    const envMeta = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    const apiBase = String(envMeta?.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+    const viteBase = String(envMeta?.BASE_URL || '/').trim().replace(/\/+$/, '');
+    const prefix = apiBase || (viteBase && viteBase !== '/' ? viteBase : '');
+    const res = await fetch(`${prefix}/api/runtime/environment-policy?${query.toString()}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',

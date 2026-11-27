@@ -33,19 +33,26 @@ const DEFAULT_BRANDING_FALLBACK: SchoolBrandingConfig = {
 };
 
 export function resolveApiUrl(apiPath: string): string {
+  const normalizedPath = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
   try {
-    const rawBase = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
-      ?.VITE_API_BASE_URL;
+    const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    const rawBase = env?.VITE_API_BASE_URL;
     const cleaned = String(rawBase || '')
       .trim()
       .replace(/\/+$/, '');
     if (cleaned) {
-      return `${cleaned}${apiPath.startsWith('/') ? apiPath : `/${apiPath}`}`;
+      return `${cleaned}${normalizedPath}`;
+    }
+    const viteBaseUrl = String(env?.BASE_URL || '/')
+      .trim()
+      .replace(/\/+$/, '');
+    if (viteBaseUrl && viteBaseUrl !== '/') {
+      return `${viteBaseUrl}${normalizedPath}`;
     }
   } catch {
     // fallback same-origin
   }
-  return apiPath;
+  return normalizedPath;
 }
 
 async function parseJsonOrNull(res: Response): Promise<Record<string, unknown> | null> {

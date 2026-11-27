@@ -275,6 +275,22 @@ const QUESTION_DRAFT_ITEM_SCHEMA = {
 async function startServer() {
   const app = express();
   app.set('trust proxy', 1);
+
+  // Hỗ trợ triển khai Node.js dưới đường dẫn con (cPanel PASSENGER_BASE_URI hoặc APP_BASE_PATH)
+  const rawBasePath = String(process.env.PASSENGER_BASE_URI || process.env.APP_BASE_PATH || '').trim();
+  const normalizedBasePath =
+    rawBasePath && rawBasePath !== '/' ? `/${rawBasePath.replace(/^\/+|\/+$/g, '')}` : '';
+  if (normalizedBasePath) {
+    app.use((req, _res, next) => {
+      if (req.url === normalizedBasePath) {
+        req.url = '/';
+      } else if (req.url.startsWith(`${normalizedBasePath}/`)) {
+        req.url = req.url.slice(normalizedBasePath.length) || '/';
+      }
+      next();
+    });
+  }
+
   const rawPort = process.env.PORT ? String(process.env.PORT).trim() : '';
   const PORT: number | string = rawPort ? (/^\d+$/.test(rawPort) ? Number(rawPort) : rawPort) : 3000;
 
@@ -9665,10 +9681,11 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       });
       modified = true;
     } else {
+      const missingSchoolAdminHash = !String(existingSchoolAdmin.passwordHashFull || '').trim();
       if (
         existingSchoolAdmin.email !== 'minhld@hue.edu.vn' ||
         existingSchoolAdmin.username !== 'minhld@hue.edu.vn' ||
-        existingSchoolAdmin.passwordHashFull !== schoolAdminHash.fullHash ||
+        missingSchoolAdminHash ||
         existingSchoolAdmin.status !== 'ACTIVE'
       ) {
         existingSchoolAdmin.id = 'user-school-admin-a';
@@ -9677,9 +9694,11 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
         existingSchoolAdmin.email = 'minhld@hue.edu.vn';
         existingSchoolAdmin.fullName = 'Lê Đức Minh (Quản trị viên Trường)';
         existingSchoolAdmin.positionTitle = 'Quản trị viên trường';
-        existingSchoolAdmin.passwordHashAlgorithm = 'PBKDF2-SHA256-100000';
-        existingSchoolAdmin.passwordHashFull = schoolAdminHash.fullHash;
-        existingSchoolAdmin.passwordHashPreview = schoolAdminHash.preview;
+        if (missingSchoolAdminHash) {
+          existingSchoolAdmin.passwordHashAlgorithm = 'PBKDF2-SHA256-100000';
+          existingSchoolAdmin.passwordHashFull = schoolAdminHash.fullHash;
+          existingSchoolAdmin.passwordHashPreview = schoolAdminHash.preview;
+        }
         existingSchoolAdmin.roles = ['SCHOOL_ADMIN', 'SYSTEM_ADMIN'];
         existingSchoolAdmin.activeRole = 'SCHOOL_ADMIN';
         existingSchoolAdmin.educationLevels = ['PRIMARY', 'LOWER_SECONDARY'];
@@ -9724,10 +9743,11 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       });
       modified = true;
     } else {
+      const missingSiaHash = !String(existingSiaAdmin.passwordHashFull || '').trim();
       if (
         existingSiaAdmin.email !== 'admin_sia@hue.edu.vn' ||
         existingSiaAdmin.username !== 'admin_sia@hue.edu.vn' ||
-        existingSiaAdmin.passwordHashFull !== siaAdminHash.fullHash ||
+        missingSiaHash ||
         existingSiaAdmin.schoolId !== 'SCHOOL_B' ||
         existingSiaAdmin.status !== 'ACTIVE'
       ) {
@@ -9737,9 +9757,11 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
         existingSiaAdmin.email = 'admin_sia@hue.edu.vn';
         existingSiaAdmin.fullName = 'Quản trị viên Trường Tiểu học Sịa';
         existingSiaAdmin.positionTitle = 'Quản trị viên trường';
-        existingSiaAdmin.passwordHashAlgorithm = 'PBKDF2-SHA256-100000';
-        existingSiaAdmin.passwordHashFull = siaAdminHash.fullHash;
-        existingSiaAdmin.passwordHashPreview = siaAdminHash.preview;
+        if (missingSiaHash) {
+          existingSiaAdmin.passwordHashAlgorithm = 'PBKDF2-SHA256-100000';
+          existingSiaAdmin.passwordHashFull = siaAdminHash.fullHash;
+          existingSiaAdmin.passwordHashPreview = siaAdminHash.preview;
+        }
         existingSiaAdmin.roles = ['SCHOOL_ADMIN', 'SYSTEM_ADMIN'];
         existingSiaAdmin.activeRole = 'SCHOOL_ADMIN';
         existingSiaAdmin.educationLevels = ['PRIMARY'];
@@ -9784,10 +9806,11 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       });
       modified = true;
     } else {
+      const missingDdungHash = !String(existingDdungAdmin.passwordHashFull || '').trim();
       if (
         existingDdungAdmin.email !== 'admin_ddung@hue.edu.vn' ||
         existingDdungAdmin.username !== 'admin_ddung@hue.edu.vn' ||
-        existingDdungAdmin.passwordHashFull !== ddungAdminHash.fullHash ||
+        missingDdungHash ||
         existingDdungAdmin.schoolId !== 'SCHOOL_C' ||
         existingDdungAdmin.status !== 'ACTIVE'
       ) {
@@ -9797,9 +9820,11 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
         existingDdungAdmin.email = 'admin_ddung@hue.edu.vn';
         existingDdungAdmin.fullName = 'Quản trị viên Trường THCS Đặng Dung';
         existingDdungAdmin.positionTitle = 'Quản trị viên trường';
-        existingDdungAdmin.passwordHashAlgorithm = 'PBKDF2-SHA256-100000';
-        existingDdungAdmin.passwordHashFull = ddungAdminHash.fullHash;
-        existingDdungAdmin.passwordHashPreview = ddungAdminHash.preview;
+        if (missingDdungHash) {
+          existingDdungAdmin.passwordHashAlgorithm = 'PBKDF2-SHA256-100000';
+          existingDdungAdmin.passwordHashFull = ddungAdminHash.fullHash;
+          existingDdungAdmin.passwordHashPreview = ddungAdminHash.preview;
+        }
         existingDdungAdmin.roles = ['SCHOOL_ADMIN', 'SYSTEM_ADMIN'];
         existingDdungAdmin.activeRole = 'SCHOOL_ADMIN';
         existingDdungAdmin.educationLevels = ['LOWER_SECONDARY'];
@@ -55212,10 +55237,14 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     });
   }
 
-  const isPhusionPassenger =
-    typeof (globalThis as Record<string, unknown>).PhusionPassenger !== 'undefined';
+  const passengerGlobal = (globalThis as Record<string, unknown>).PhusionPassenger as
+    | { configure?: (opts: { autoInstall: boolean }) => void }
+    | undefined;
 
-  if (isPhusionPassenger) {
+  if (passengerGlobal) {
+    if (typeof passengerGlobal.configure === 'function') {
+      passengerGlobal.configure({ autoInstall: false });
+    }
     app.listen('passenger', () => {
       console.log('EDU TEST AI Server running under Phusion Passenger');
     });
