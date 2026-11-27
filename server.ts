@@ -57,6 +57,8 @@ function resolveWritableDataDir(): string {
 
 const UPLOAD_DIR = resolveWritableDataDir();
 const MULTITENANT_DB_FILE = path.join(UPLOAD_DIR, 'edutest_multitenant_db.json');
+const REPO_DATA_DIR = path.join(APP_ROOT_DIR, 'data');
+const REPO_SEED_DB_FILE = path.join(REPO_DATA_DIR, 'edutest_multitenant_db.json');
 const githubDataStorage = createGitHubDataStorageEngine(UPLOAD_DIR);
 
 const MAX_QUESTIONS_PER_BATCH = 15;
@@ -3748,6 +3750,18 @@ ${Array.isArray(extractedFormulas) && extractedFormulas.length > 0 ? `\n[CÔNG T
           return parsed;
         }
       }
+      if (fs.existsSync(REPO_SEED_DB_FILE)) {
+        const seedRaw = fs.readFileSync(REPO_SEED_DB_FILE, 'utf8');
+        const seedParsed = JSON.parse(seedRaw);
+        if (seedParsed && seedParsed.collections && Array.isArray(seedParsed.collections.Schools)) {
+          delete seedParsed.persistedAuthSessions;
+          saveMultiTenantDb(seedParsed, { skipGithubAutoPush: true });
+          console.log(
+            `[Data Bootstrap] Loaded versioned snapshot from data/edutest_multitenant_db.json (${(seedParsed.collections.Users || []).length} accounts).`
+          );
+          return seedParsed;
+        }
+      }
     } catch (e) {
       console.error('Failed to read multitenant DB file:', e);
       if (cachedMultiTenantDb) {
@@ -3755,7 +3769,7 @@ ${Array.isArray(extractedFormulas) && extractedFormulas.length > 0 ? `\n[CÔNG T
       }
     }
     const fresh = createInitialMultiTenantDb();
-    saveMultiTenantDb(fresh);
+    saveMultiTenantDb(fresh, { skipGithubAutoPush: true });
     return fresh;
   }
 
@@ -52816,19 +52830,25 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
               academicYear: '2026 - 2027',
             },
           ]
-        : [
-            {
-              schoolId: user.schoolId || 'SCHOOL_A',
-              schoolCode: 'TH-THCS-NDA',
-              schoolName: 'Trường TH&THCS Nguyễn Đình Anh',
-              levelLabel: 'Tiểu học & THCS',
-              role: primaryRole,
-              roleLabel: user.positionTitle || primaryRole,
-              departmentName: user.departmentName,
-              status: 'ACTIVE',
-              academicYear: '2026 - 2027',
-            },
-          ];
+        : (() => {
+            const matchedSchool = (multiTenantDb.collections.Schools || []).find(
+              (s: { id?: string; code?: string; name?: string; levelLabel?: string; status?: string }) =>
+                s && s.id === user.schoolId
+            );
+            return [
+              {
+                schoolId: user.schoolId || 'SCHOOL_A',
+                schoolCode: matchedSchool?.code || 'TH-THCS-NDA',
+                schoolName: matchedSchool?.name || 'Trường TH&THCS Nguyễn Đình Anh',
+                levelLabel: matchedSchool?.levelLabel || 'Tiểu học & THCS',
+                role: primaryRole,
+                roleLabel: user.positionTitle || primaryRole,
+                departmentName: user.departmentName,
+                status: matchedSchool?.status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE',
+                academicYear: '2026 - 2027',
+              },
+            ];
+          })();
 
     return res.status(200).json({
       ok: true,
@@ -53664,8 +53684,14 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
 
   function loadSmartQuestionLinkStore(): Record<string, ServerSmartQuestionLinkConfig> {
     try {
-      if (fs.existsSync(SMART_QUESTION_LINK_FILE)) {
-        const raw = fs.readFileSync(SMART_QUESTION_LINK_FILE, 'utf-8');
+      const repoFallbackFile = path.join(REPO_DATA_DIR, 'smart_question_link_config.json');
+      const sourceFile = fs.existsSync(SMART_QUESTION_LINK_FILE)
+        ? SMART_QUESTION_LINK_FILE
+        : fs.existsSync(repoFallbackFile)
+        ? repoFallbackFile
+        : null;
+      if (sourceFile) {
+        const raw = fs.readFileSync(sourceFile, 'utf-8');
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
           return parsed as Record<string, ServerSmartQuestionLinkConfig>;
@@ -54906,6 +54932,9 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
   }
 
+  // Đảm bảo đầy đủ toàn bộ tài khoản trường học & quản trị luôn sẵn sàng ngay khi khởi động máy chủ
+  ensureSpecialTestAccountsInDb();
+
   // Endpoint kiểm tra trạng thái sống của máy chủ phục vụ triển khai Production/Hosting
   app.get('/api/health', (_req, res) => {
     const ghStatus = githubDataStorage.getStatus();
@@ -54914,6 +54943,12 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       status: 'healthy',
       runtimeEnv: process.env.APP_RUNTIME_ENV || process.env.NODE_ENV || 'production',
       githubStorageReady: ghStatus.readyForSync,
+      accountsCount: Array.isArray(multiTenantDb?.collections?.Users)
+        ? multiTenantDb.collections.Users.length
+        : 0,
+      schoolsCount: Array.isArray(multiTenantDb?.collections?.Schools)
+        ? multiTenantDb.collections.Schools.length
+        : 0,
     });
   });
 

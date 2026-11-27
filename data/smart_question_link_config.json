@@ -1,0 +1,24 @@
+{
+  "SCHOOL_A": {
+    "url": "https://share.gemini.google/FaOnVBYQpNbQ",
+    "buttonLabel": "Tạo câu hỏi thông minh",
+    "description": "Công cụ hỗ trợ giáo viên biên soạn và phát triển câu hỏi thông minh theo đường liên kết do Quản trị viên cung cấp.",
+    "openMode": "IN_APP_WORKSPACE",
+    "isEnabled": true,
+    "updatedAt": "2026-11-11T14:32:03.742Z",
+    "updatedBy": "Lê Đức Minh (Quản trị viên Trường)",
+    "updatedByRole": "SCHOOL_ADMIN",
+    "schoolId": "SCHOOL_A"
+  },
+  "GLOBAL": {
+    "url": "https://share.gemini.google/FaOnVBYQpNbQ",
+    "buttonLabel": "Tạo câu hỏi thông minh",
+    "description": "Công cụ hỗ trợ giáo viên biên soạn và phát triển câu hỏi thông minh theo đường liên kết do Quản trị viên cung cấp.",
+    "openMode": "IN_APP_WORKSPACE",
+    "isEnabled": true,
+    "updatedAt": "2026-11-11T14:32:03.742Z",
+    "updatedBy": "Lê Đức Minh (Quản trị viên Trường)",
+    "updatedByRole": "SCHOOL_ADMIN",
+    "schoolId": "SCHOOL_A"
+  }
+}
