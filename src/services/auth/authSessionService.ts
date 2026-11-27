@@ -26,7 +26,7 @@ const DEFAULT_BRANDING_FALLBACK: SchoolBrandingConfig = {
   updatedBy: 'Hệ thống',
 };
 
-function resolveApiUrl(apiPath: string): string {
+export function resolveApiUrl(apiPath: string): string {
   try {
     const rawBase = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
       ?.VITE_API_BASE_URL;
@@ -159,7 +159,7 @@ export async function fetchSchoolBranding(): Promise<SchoolBrandingConfig> {
 
 export async function fetchSchoolAccountsDirectory(): Promise<SchoolStaffDirectoryEntry[]> {
   try {
-    const res = await fetch('/api/auth/school-accounts-directory');
+    const res = await fetch(resolveApiUrl('/api/auth/school-accounts-directory'));
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data?.accounts)) {
@@ -182,7 +182,7 @@ export async function updateSchoolBranding(updates: {
 }): Promise<{ ok: boolean; branding: SchoolBrandingConfig; message: string }> {
   try {
     const { token } = getStoredSessionToken();
-    const res = await fetch('/api/auth/branding', {
+    const res = await fetch(resolveApiUrl('/api/auth/branding'), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -302,7 +302,7 @@ export async function loginWithServerRoleScenario(params: {
   }
 
   try {
-    const res = await fetch('/api/auth/sandbox-role-session', {
+    const res = await fetch(resolveApiUrl('/api/auth/sandbox-role-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -383,7 +383,7 @@ export async function selectWorkingRoleOrPolicy(params: {
   }
 
   try {
-    const res = await fetch('/api/auth/select-role', {
+    const res = await fetch(resolveApiUrl('/api/auth/select-role'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -428,7 +428,7 @@ export async function requestSafePasswordReset(identifier: string): Promise<Auth
     if (cleaned.includes('@')) {
       await executeFirebaseSendPasswordResetEmailNeutral(cleaned);
     }
-    const res = await fetch('/api/auth/forgot-password', {
+    const res = await fetch(resolveApiUrl('/api/auth/forgot-password'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier: cleaned }),
@@ -456,7 +456,7 @@ export async function logoutCurrentSession(): Promise<void> {
   if (!token) return;
 
   try {
-    await fetch('/api/auth/logout', {
+    await fetch(resolveApiUrl('/api/auth/logout'), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -475,7 +475,7 @@ export async function checkProtectedRouteGuard(targetRoute: string): Promise<{
   const { token } = getStoredSessionToken();
   try {
     const res = await fetch(
-      `/api/auth/protected-check?route=${encodeURIComponent(targetRoute)}`,
+      resolveApiUrl(`/api/auth/protected-check?route=${encodeURIComponent(targetRoute)}`),
       {
         method: 'GET',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -506,7 +506,7 @@ export async function checkProtectedRouteGuard(targetRoute: string): Promise<{
 
 export async function runBackendAuthVerificationSuite(): Promise<AuthVerificationSuiteReport | null> {
   try {
-    const res = await fetch('/api/auth/run-verification-suite', {
+    const res = await fetch(resolveApiUrl('/api/auth/run-verification-suite'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });

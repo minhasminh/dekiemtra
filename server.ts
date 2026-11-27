@@ -55013,7 +55013,14 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     });
   }
 
-  if (typeof PORT === 'number') {
+  const isPhusionPassenger =
+    typeof (globalThis as Record<string, unknown>).PhusionPassenger !== 'undefined';
+
+  if (isPhusionPassenger) {
+    app.listen('passenger', () => {
+      console.log('EDU TEST AI Server running under Phusion Passenger');
+    });
+  } else if (typeof PORT === 'number') {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`EDU TEST AI Server running on http://localhost:${PORT}`);
     });

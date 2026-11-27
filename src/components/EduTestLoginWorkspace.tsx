@@ -24,6 +24,7 @@ import {
   loginWithCredentials,
   requestSafePasswordReset,
   clearStoredSessionToken,
+  resolveApiUrl,
 } from '../services/auth/authSessionService';
 import {
   getOfficialRoleDisplayLabel,
@@ -139,7 +140,7 @@ export const EduTestLoginWorkspace: React.FC<EduTestLoginWorkspaceProps> = ({
 
       // Kiểm tra danh sách trường học mà tài khoản có membership hợp lệ từ Backend (Mục IV)
       try {
-        const verifyRes = await fetch('/api/stage22/auth/context', {
+        const verifyRes = await fetch(resolveApiUrl('/api/stage22/auth/context'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
