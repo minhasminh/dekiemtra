@@ -46,7 +46,7 @@ export function resolveApiUrl(apiPath: string): string {
     const viteBaseUrl = String(env?.BASE_URL || '/')
       .trim()
       .replace(/\/+$/, '');
-    if (viteBaseUrl && viteBaseUrl !== '/') {
+    if (viteBaseUrl && viteBaseUrl.startsWith('/') && viteBaseUrl !== '/') {
       return `${viteBaseUrl}${normalizedPath}`;
     }
   } catch {
