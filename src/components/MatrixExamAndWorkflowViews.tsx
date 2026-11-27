@@ -36,6 +36,7 @@ import {
   getRuleSetForLevel,
 } from '../services/business/assessmentRules';
 import { SmartQuestionLinkAdminConfigPanel } from './SmartQuestionLinkWorkspace';
+import { GitHubDataStoragePanel } from './GitHubDataStoragePanel';
 
 interface MatrixSpecificationViewProps {
   matrices: ExamMatrix[];
@@ -1005,6 +1006,7 @@ interface SecondaryModulesViewProps {
   config: StorageConfig;
   onSaveConfig: (cfg: StorageConfig) => void;
   onResetSeedData: () => void;
+  onReloadDataFromServer?: () => Promise<void> | void;
   onNotify: (type: 'success' | 'error' | 'warning' | 'info', title: string, message: string) => void;
 }
 
@@ -1016,6 +1018,7 @@ export const SecondaryModulesView: React.FC<SecondaryModulesViewProps> = ({
   config,
   onSaveConfig,
   onResetSeedData,
+  onReloadDataFromServer,
   onNotify,
 }) => {
   const [schoolName, setSchoolName] = useState(config.schoolName);
@@ -1309,6 +1312,11 @@ export const SecondaryModulesView: React.FC<SecondaryModulesViewProps> = ({
           </div>
         </div>
       </div>
+
+      <GitHubDataStoragePanel
+        onNotify={onNotify}
+        onDataPulledFromGitHub={onReloadDataFromServer}
+      />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import https from 'https';
 import { createWorker, OEM, type Worker as TesseractWorker } from 'tesseract.js';
 import { AsyncLocalStorage } from 'async_hooks';
 import { fileURLToPath } from 'url';
+import { createGitHubDataStorageEngine } from './src/services/storage/githubStorageBackend.ts';
 
 const APP_ROOT_DIR = (() => {
   try {
@@ -56,6 +57,7 @@ function resolveWritableDataDir(): string {
 
 const UPLOAD_DIR = resolveWritableDataDir();
 const MULTITENANT_DB_FILE = path.join(UPLOAD_DIR, 'edutest_multitenant_db.json');
+const githubDataStorage = createGitHubDataStorageEngine(UPLOAD_DIR);
 
 const MAX_QUESTIONS_PER_BATCH = 15;
 const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
@@ -3757,7 +3759,10 @@ ${Array.isArray(extractedFormulas) && extractedFormulas.length > 0 ? `\n[CÔNG T
     return fresh;
   }
 
-  function saveMultiTenantDb(dbData: ReturnType<typeof createInitialMultiTenantDb>) {
+  function saveMultiTenantDb(
+    dbData: ReturnType<typeof createInitialMultiTenantDb>,
+    options?: { skipGithubAutoPush?: boolean; githubSyncReason?: string }
+  ) {
     const serialized = JSON.stringify(dbData, null, 2);
     const tmpFile = `${MULTITENANT_DB_FILE}.tmp.${process.pid}.${Date.now()}.${Math.random()
       .toString(36)
@@ -3782,6 +3787,12 @@ ${Array.isArray(extractedFormulas) && extractedFormulas.length > 0 ? `\n[CÔNG T
       cachedMultiTenantDbMtimeMs = fs.statSync(MULTITENANT_DB_FILE).mtimeMs;
     } catch {
       cachedMultiTenantDbMtimeMs = Date.now();
+    }
+    if (!options?.skipGithubAutoPush) {
+      githubDataStorage.scheduleAutoPush(
+        () => multiTenantDb as unknown as Record<string, unknown>,
+        options?.githubSyncReason || 'AUTO_DATA_UPDATE'
+      );
     }
   }
 
@@ -8605,7 +8616,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
     store[token] = entry;
     dbAny.persistedAuthSessions = store;
-    saveMultiTenantDb(multiTenantDb);
+    saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
   }
 
   function removePersistedAuthSession(token: string) {
@@ -8615,7 +8626,7 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     const store = dbAny.persistedAuthSessions as Record<string, ServerAuthSessionEntry> | undefined;
     if (store && token in store) {
       delete store[token];
-      saveMultiTenantDb(multiTenantDb);
+      saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
     }
   }
 
@@ -54670,12 +54681,239 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     }
   });
 
+  // ============================================================================
+  // LƯU TRỮ & ĐỒNG BỘ DỮ LIỆU LÊN GITHUB REPOSITORY (SERVER-SIDE PROXY)
+  // ============================================================================
+  const GITHUB_STORAGE_ADMIN_ROLES = new Set([
+    'SUPER_ADMIN',
+    'SYSTEM_ADMIN',
+    'SCHOOL_ADMIN',
+    'PRINCIPAL',
+  ]);
+
+  function resolveAuthenticatedActorForGitHubStorage(
+    req: express.Request,
+    res: express.Response,
+    requireAdminRole: boolean
+  ): { id: string; fullName: string; schoolId: string; roles: string[] } | null {
+    multiTenantDb = loadMultiTenantDb();
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        ok: false,
+        message: 'Yêu cầu đăng nhập hợp lệ để truy cập cấu hình lưu trữ GitHub.',
+      });
+      return null;
+    }
+    const token = authHeader.slice(7).trim();
+    const sess = lookupEnhancedAuthSession(token) || activeSessions.get(token);
+    if (!sess) {
+      res.status(401).json({
+        ok: false,
+        message: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.',
+      });
+      return null;
+    }
+    const user = multiTenantDb.collections.Users.find(
+      (u: { id: string; status: string }) => u.id === sess.userId
+    );
+    if (!user || user.status !== 'ACTIVE') {
+      res.status(403).json({
+        ok: false,
+        message: 'Tài khoản không còn hoạt động.',
+      });
+      return null;
+    }
+    const roles: string[] = Array.isArray(user.roles) ? user.roles.map(String) : [];
+    if (requireAdminRole && !roles.some((r: string) => GITHUB_STORAGE_ADMIN_ROLES.has(r))) {
+      res.status(403).json({
+        ok: false,
+        message:
+          'Chỉ Quản trị viên hệ thống, Quản trị trường hoặc Hiệu trưởng mới được cấu hình và đồng bộ kho dữ liệu GitHub.',
+      });
+      return null;
+    }
+    return {
+      id: user.id,
+      fullName: user.fullName || user.username,
+      schoolId: user.schoolId || 'SCHOOL_A',
+      roles,
+    };
+  }
+
+  app.get('/api/github-storage/status', (req, res) => {
+    const actor = resolveAuthenticatedActorForGitHubStorage(req, res, false);
+    if (!actor) return;
+    res.status(200).json({
+      ok: true,
+      status: githubDataStorage.getStatus(),
+    });
+  });
+
+  app.put('/api/github-storage/config', (req, res) => {
+    const actor = resolveAuthenticatedActorForGitHubStorage(req, res, true);
+    if (!actor) return;
+    const body = req.body || {};
+    const outcome = githubDataStorage.updateConfig(
+      {
+        owner: body.owner,
+        repo: body.repo,
+        branch: body.branch,
+        filePath: body.filePath,
+        autoSyncEnabled: body.autoSyncEnabled,
+        syncDebounceMs: body.syncDebounceMs,
+        commitAuthorName: body.commitAuthorName,
+        commitAuthorEmail: body.commitAuthorEmail,
+      },
+      actor.fullName
+    );
+    if (!outcome.ok) {
+      res.status(400).json({
+        ok: false,
+        message: outcome.message,
+        status: githubDataStorage.getStatus(),
+      });
+      return;
+    }
+    appendAuditLog({
+      schoolId: actor.schoolId,
+      actorUserId: actor.id,
+      actorName: actor.fullName,
+      actorRoles: actor.roles,
+      action: 'UPDATE_GITHUB_STORAGE_CONFIG',
+      targetType: 'GITHUB_STORAGE',
+      targetId: `${outcome.config.owner}/${outcome.config.repo}`,
+      summary: `Cập nhật kho lưu trữ dữ liệu GitHub: ${outcome.config.owner}/${outcome.config.repo}@${outcome.config.branch}:${outcome.config.filePath} (autoSync=${outcome.config.autoSyncEnabled}).`,
+      httpStatus: 200,
+      status: 'ALLOWED',
+    });
+    saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
+    res.status(200).json({
+      ok: true,
+      config: outcome.config,
+      status: githubDataStorage.getStatus(),
+      message: 'Đã lưu cấu hình kho lưu trữ dữ liệu GitHub.',
+    });
+  });
+
+  app.post('/api/github-storage/test-connection', async (req, res) => {
+    const actor = resolveAuthenticatedActorForGitHubStorage(req, res, true);
+    if (!actor) return;
+    const result = await githubDataStorage.testConnection(actor.fullName);
+    res.status(result.ok ? 200 : 400).json({
+      ...result,
+      status: githubDataStorage.getStatus(),
+    });
+  });
+
+  app.post('/api/github-storage/push', async (req, res) => {
+    const actor = resolveAuthenticatedActorForGitHubStorage(req, res, true);
+    if (!actor) return;
+    multiTenantDb = loadMultiTenantDb();
+    const force = req.body?.force !== false;
+    const reason = String(req.body?.reason || 'MANUAL_ADMIN_PUSH').slice(0, 80);
+    const result = await githubDataStorage.pushSnapshot(
+      multiTenantDb as unknown as Record<string, unknown>,
+      { reason, actorName: actor.fullName, force }
+    );
+    appendAuditLog({
+      schoolId: actor.schoolId,
+      actorUserId: actor.id,
+      actorName: actor.fullName,
+      actorRoles: actor.roles,
+      action: 'GITHUB_STORAGE_PUSH',
+      targetType: 'GITHUB_STORAGE',
+      targetId: result.commitSha || 'github-push',
+      summary: result.message,
+      httpStatus: result.ok ? 200 : 502,
+      status: result.ok ? 'ALLOWED' : 'DENIED',
+    });
+    saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
+    res.status(result.ok ? 200 : 502).json({
+      ...result,
+      status: githubDataStorage.getStatus(),
+    });
+  });
+
+  app.post('/api/github-storage/pull', async (req, res) => {
+    const actor = resolveAuthenticatedActorForGitHubStorage(req, res, true);
+    if (!actor) return;
+    const result = await githubDataStorage.pullSnapshot(actor.fullName);
+    if (!result.ok || !result.data) {
+      res.status(result.notFound ? 404 : 502).json({
+        ok: false,
+        message: result.message,
+        status: githubDataStorage.getStatus(),
+      });
+      return;
+    }
+
+    // Giữ nguyên các phiên đăng nhập cục bộ đang hoạt động để quản trị viên không bị văng phiên
+    const preservedSessions = (multiTenantDb as Record<string, unknown>).persistedAuthSessions;
+    const restoredDb = {
+      ...result.data,
+      ...(preservedSessions ? { persistedAuthSessions: preservedSessions } : {}),
+    } as ReturnType<typeof createInitialMultiTenantDb>;
+
+    multiTenantDb = restoredDb;
+    saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
+    appendAuditLog({
+      schoolId: actor.schoolId,
+      actorUserId: actor.id,
+      actorName: actor.fullName,
+      actorRoles: actor.roles,
+      action: 'GITHUB_STORAGE_PULL',
+      targetType: 'GITHUB_STORAGE',
+      targetId: result.remoteSha || 'github-pull',
+      summary: result.message,
+      httpStatus: 200,
+      status: 'ALLOWED',
+    });
+    saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
+
+    res.status(200).json({
+      ok: true,
+      message: result.message,
+      remoteSha: result.remoteSha,
+      sizeBytes: result.sizeBytes,
+      status: githubDataStorage.getStatus(),
+    });
+  });
+
+  // Tự động khôi phục bản dữ liệu mới nhất từ GitHub khi máy chủ khởi động mới (ví dụ container/hosting trắng)
+  if (githubDataStorage.isAutoSyncReady()) {
+    try {
+      const remotePull = await githubDataStorage.pullSnapshot('Khởi động máy chủ');
+      if (remotePull.ok && remotePull.data) {
+        const localMtimeMs = fs.existsSync(MULTITENANT_DB_FILE)
+          ? fs.statSync(MULTITENANT_DB_FILE).mtimeMs
+          : 0;
+        const remoteSyncedMs = remotePull.syncedAt ? new Date(remotePull.syncedAt).getTime() : 0;
+        const shouldApplyRemote =
+          !localMtimeMs || !remoteSyncedMs || remoteSyncedMs >= localMtimeMs - 2000;
+        if (shouldApplyRemote) {
+          const preservedSessions = (multiTenantDb as Record<string, unknown>).persistedAuthSessions;
+          multiTenantDb = {
+            ...remotePull.data,
+            ...(preservedSessions ? { persistedAuthSessions: preservedSessions } : {}),
+          } as ReturnType<typeof createInitialMultiTenantDb>;
+          saveMultiTenantDb(multiTenantDb, { skipGithubAutoPush: true });
+          console.log('[GitHub Storage] Hydrated database snapshot from GitHub on startup.');
+        }
+      }
+    } catch (startupPullErr) {
+      console.warn('[GitHub Storage] Startup hydrate notice:', startupPullErr);
+    }
+  }
+
   // Endpoint kiểm tra trạng thái sống của máy chủ phục vụ triển khai Production/Hosting
   app.get('/api/health', (_req, res) => {
+    const ghStatus = githubDataStorage.getStatus();
     res.status(200).json({
       ok: true,
       status: 'healthy',
       runtimeEnv: process.env.APP_RUNTIME_ENV || process.env.NODE_ENV || 'production',
+      githubStorageReady: ghStatus.readyForSync,
     });
   });
 

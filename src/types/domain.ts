@@ -1352,7 +1352,7 @@ export interface ExamPaper {
 }
 
 export interface StorageConfig {
-  provider: 'LOCAL_STORAGE' | 'FIREBASE_READY' | 'FIREBASE_FIRESTORE';
+  provider: 'LOCAL_STORAGE' | 'FIREBASE_READY' | 'FIREBASE_FIRESTORE' | 'GITHUB_REPOSITORY';
   schoolName: string;
   departmentName: string;
   academicYear: string;

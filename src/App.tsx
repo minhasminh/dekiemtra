@@ -1198,6 +1198,16 @@ export default function App() {
     setExams(dataRepository.getExams());
   };
 
+  const handleReloadDataFromServer = async () => {
+    await dataRepository.initializeFromCentralServer();
+    setConfig(dataRepository.getConfig());
+    setTopics(dataRepository.getTopics());
+    setQuestions(dataRepository.getQuestions());
+    setQuestionGroups(dataRepository.getQuestionGroups());
+    setMatrices(dataRepository.getMatrices());
+    setExams(dataRepository.getExams());
+  };
+
   // Khôi phục thông tin trường học và phiên đăng nhập khi tải lại trang
   useEffect(() => {
     let mounted = true;
@@ -2947,6 +2957,7 @@ export default function App() {
               config={config}
               onSaveConfig={handleSaveConfig}
               onResetSeedData={handleResetSeedData}
+              onReloadDataFromServer={handleReloadDataFromServer}
               onNotify={notify}
             />
           )}

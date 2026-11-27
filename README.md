@@ -64,3 +64,23 @@ git push -u origin main
 5. **Đăng nhập Google / Firebase trên tên miền mới**:
    - Vào **Firebase Console → Authentication → Settings → Authorized domains** và thêm tên miền hosting của bạn (ví dụ `tenmiencuaban.edu.vn`) để bật đăng nhập Google và kết nối Firebase Auth từ trình duyệt.
 
+## Lưu trữ & Đồng bộ Dữ liệu trực tiếp lên GitHub Repository
+
+Ứng dụng tích hợp sẵn lớp lưu trữ dữ liệu qua GitHub Contents API ở phía máy chủ Backend (hỗ trợ tệp lớn qua Git Blobs API và tự động tách bỏ phiên đăng nhập trước khi commit):
+
+1. Tạo **GitHub Personal Access Token** (Fine-grained token cấp quyền `Contents: Read and write` cho kho dữ liệu — khuyến nghị dùng kho **Private**).
+2. Khai báo các biến môi trường trên máy chủ (`.env` hoặc Environment Variables trên Hosting):
+   ```env
+   GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+   GITHUB_DATA_OWNER=minhasminh
+   GITHUB_DATA_REPO=dekiemtra
+   GITHUB_DATA_BRANCH=data-storage
+   GITHUB_DATA_PATH=data/edutest_multitenant_db.json
+   GITHUB_DATA_AUTOSYNC=true
+   ```
+3. Khởi động lại máy chủ Backend, sau đó đăng nhập bằng tài khoản Quản trị và vào **Thiết lập hệ thống** (`Cài đặt Hệ thống & Cấu hình Lớp Lưu trữ Dữ liệu`) để:
+   - Kiểm tra kết nối GitHub.
+   - Bật/tắt chế độ tự động đồng bộ khi có thay đổi dữ liệu.
+   - Đẩy dữ liệu lên GitHub ngay lập tức hoặc khôi phục lại toàn bộ dữ liệu từ tệp JSON trên GitHub.
+
+
