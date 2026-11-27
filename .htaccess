@@ -1,0 +1,15 @@
+<IfModule mod_mime.c>
+  AddType text/javascript .js .mjs
+  AddType text/css .css
+  AddType application/wasm .wasm
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Giữ nguyên tuyến /api/* cho Node.js hoặc Reverse Proxy
+  RewriteRule ^api/ - [L]
+  # Nếu DocumentRoot đang trỏ nhầm vào thư mục gốc mã nguồn thay vì dist/, tự động phục vụ bản đã build trong dist/
+  RewriteCond %{DOCUMENT_ROOT}/dist/index.html -f
+  RewriteCond %{REQUEST_URI} !^/dist/
+  RewriteRule ^(.*)$ dist/$1 [L]
+</IfModule>

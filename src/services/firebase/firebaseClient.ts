@@ -51,42 +51,80 @@ export function resolveFirebaseWebConfig(
   customOverride?: Partial<ResolvedFirebaseWebConfig>
 ): ResolvedFirebaseWebConfig {
   const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
+  const hasAppletConfig = Boolean(
+    appletFirebaseConfig?.projectId &&
+      appletFirebaseConfig?.apiKey &&
+      appletFirebaseConfig?.authDomain
+  );
+  const currentHost =
+    typeof window !== 'undefined' && window.location?.hostname
+      ? window.location.hostname.toLowerCase()
+      : '';
+  const isAiStudioOrLocalHost =
+    currentHost === 'localhost' ||
+    currentHost === '127.0.0.1' ||
+    currentHost.endsWith('.run.app') ||
+    currentHost.endsWith('.usercontent.goog') ||
+    currentHost.endsWith('.web.app') ||
+    currentHost.endsWith('.firebaseapp.com');
+
+  // Trên môi trường AI Studio (*.run.app / localhost), luôn ưu tiên firebase-applet-config.json
+  // vì dự án này đã được AI Studio cấp phép sẵn Authorized Domains & Cloud Firestore database.
+  const preferAppletConfig = hasAppletConfig && isAiStudioOrLocalHost;
+
+  const pickField = (
+    overrideVal: string | undefined,
+    envVal: string | undefined,
+    appletVal: string | undefined,
+    fallback = ''
+  ): string => {
+    if (overrideVal !== undefined) return overrideVal;
+    if (preferAppletConfig) {
+      return appletVal || envVal || fallback;
+    }
+    return envVal || appletVal || fallback;
+  };
+
   const fromEnv = Boolean(
-    env.VITE_FIREBASE_PROJECT_ID || env.VITE_FIREBASE_API_KEY
+    !preferAppletConfig && (env.VITE_FIREBASE_PROJECT_ID || env.VITE_FIREBASE_API_KEY)
   );
 
-  const projectId =
-    customOverride?.projectId !== undefined
-      ? customOverride.projectId
-      : env.VITE_FIREBASE_PROJECT_ID || appletFirebaseConfig.projectId || '';
-  const appId =
-    customOverride?.appId !== undefined
-      ? customOverride.appId
-      : env.VITE_FIREBASE_APP_ID || appletFirebaseConfig.appId || '';
-  const apiKey =
-    customOverride?.apiKey !== undefined
-      ? customOverride.apiKey
-      : env.VITE_FIREBASE_API_KEY || appletFirebaseConfig.apiKey || '';
-  const authDomain =
-    customOverride?.authDomain !== undefined
-      ? customOverride.authDomain
-      : env.VITE_FIREBASE_AUTH_DOMAIN || appletFirebaseConfig.authDomain || '';
-  const firestoreDatabaseId =
-    customOverride?.firestoreDatabaseId !== undefined
-      ? customOverride.firestoreDatabaseId
-      : env.VITE_FIREBASE_FIRESTORE_DATABASE_ID ||
-        appletFirebaseConfig.firestoreDatabaseId ||
-        '(default)';
-  const storageBucket =
-    customOverride?.storageBucket !== undefined
-      ? customOverride.storageBucket
-      : env.VITE_FIREBASE_STORAGE_BUCKET || appletFirebaseConfig.storageBucket || '';
-  const messagingSenderId =
-    customOverride?.messagingSenderId !== undefined
-      ? customOverride.messagingSenderId
-      : env.VITE_FIREBASE_MESSAGING_SENDER_ID ||
-        appletFirebaseConfig.messagingSenderId ||
-        '';
+  const projectId = pickField(
+    customOverride?.projectId,
+    env.VITE_FIREBASE_PROJECT_ID,
+    appletFirebaseConfig.projectId
+  );
+  const appId = pickField(
+    customOverride?.appId,
+    env.VITE_FIREBASE_APP_ID,
+    appletFirebaseConfig.appId
+  );
+  const apiKey = pickField(
+    customOverride?.apiKey,
+    env.VITE_FIREBASE_API_KEY,
+    appletFirebaseConfig.apiKey
+  );
+  const authDomain = pickField(
+    customOverride?.authDomain,
+    env.VITE_FIREBASE_AUTH_DOMAIN,
+    appletFirebaseConfig.authDomain
+  );
+  const firestoreDatabaseId = pickField(
+    customOverride?.firestoreDatabaseId,
+    env.VITE_FIREBASE_FIRESTORE_DATABASE_ID,
+    appletFirebaseConfig.firestoreDatabaseId,
+    '(default)'
+  );
+  const storageBucket = pickField(
+    customOverride?.storageBucket,
+    env.VITE_FIREBASE_STORAGE_BUCKET,
+    appletFirebaseConfig.storageBucket
+  );
+  const messagingSenderId = pickField(
+    customOverride?.messagingSenderId,
+    env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appletFirebaseConfig.messagingSenderId
+  );
 
   const hasCoreFields = Boolean(projectId && appId && apiKey && authDomain);
 

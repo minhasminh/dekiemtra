@@ -291,6 +291,14 @@ async function startServer() {
     });
   }
 
+  // Chuẩn hóa nếu trình duyệt hoặc biến môi trường VITE_API_BASE_URL=/api vô tình tạo đường dẫn /api/api/...
+  app.use((req, _res, next) => {
+    if (req.url === '/api/api' || req.url.startsWith('/api/api/')) {
+      req.url = req.url.slice(4);
+    }
+    next();
+  });
+
   const rawPort = process.env.PORT ? String(process.env.PORT).trim() : '';
   const PORT: number | string = rawPort ? (/^\d+$/.test(rawPort) ? Number(rawPort) : rawPort) : 3000;
 
@@ -10429,7 +10437,126 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
     });
   });
 
-  // 3B. Đăng nhập bằng Google thông qua Firebase Authentication (Xác thực ID Token trực tiếp với Google Identity Toolkit)
+  // 3B. Đăng nhập bằng Google thông qua Firebase Authentication (Xác thực RS256 JWT bằng chứng thư X.509 chính thức của Google + dự phòng Identity Toolkit)
+  let cachedGoogleX509Certs: Record<string, string> = {};
+  let cachedGoogleX509ExpiresAtMs = 0;
+
+  async function fetchGoogleSecureTokenCerts(forceRefresh = false): Promise<Record<string, string>> {
+    const nowMs = Date.now();
+    if (!forceRefresh && Object.keys(cachedGoogleX509Certs).length > 0 && nowMs < cachedGoogleX509ExpiresAtMs) {
+      return cachedGoogleX509Certs;
+    }
+    const certRes = await fetch(
+      'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
+    );
+    if (!certRes.ok) {
+      throw new Error(`HTTP_${certRes.status}`);
+    }
+    const certs = (await certRes.json()) as Record<string, string>;
+    const cc = String(certRes.headers.get('cache-control') || '');
+    const maxAgeMatch = /max-age=(\d+)/i.exec(cc);
+    const maxAgeSec = maxAgeMatch ? Math.max(60, Number(maxAgeMatch[1])) : 3600;
+    cachedGoogleX509Certs = certs;
+    cachedGoogleX509ExpiresAtMs = nowMs + maxAgeSec * 1000;
+    return certs;
+  }
+
+  async function verifyFirebaseIdTokenRS256(
+    idToken: string,
+    allowedProjectIds: string[]
+  ): Promise<{
+    ok: boolean;
+    uid?: string;
+    email?: string;
+    emailVerified?: boolean;
+    displayName?: string;
+    reason?: string;
+  }> {
+    const parts = idToken.split('.');
+    if (parts.length !== 3) {
+      return { ok: false, reason: 'MALFORMED_JWT' };
+    }
+    const [headerB64, payloadB64, sigB64] = parts;
+    let header: { alg?: string; kid?: string };
+    let payload: {
+      aud?: string;
+      iss?: string;
+      sub?: string;
+      exp?: number;
+      iat?: number;
+      email?: string;
+      email_verified?: boolean;
+      name?: string;
+      firebase?: { identities?: { email?: string[] } };
+    };
+    try {
+      header = JSON.parse(Buffer.from(headerB64, 'base64url').toString('utf8'));
+      payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    } catch {
+      return { ok: false, reason: 'INVALID_JWT_ENCODING' };
+    }
+
+    if (header.alg !== 'RS256' || !header.kid) {
+      return { ok: false, reason: 'INVALID_JWT_HEADER' };
+    }
+
+    let certs = await fetchGoogleSecureTokenCerts(false);
+    let certPem = certs[header.kid];
+    if (!certPem) {
+      certs = await fetchGoogleSecureTokenCerts(true);
+      certPem = certs[header.kid];
+    }
+    if (!certPem) {
+      return { ok: false, reason: 'UNKNOWN_KID' };
+    }
+
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update(`${headerB64}.${payloadB64}`);
+    verifier.end();
+    const sigValid = verifier.verify(certPem, Buffer.from(sigB64, 'base64url'));
+    if (!sigValid) {
+      return { ok: false, reason: 'INVALID_SIGNATURE' };
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const normalizedAllowed = allowedProjectIds.filter(Boolean);
+    if (normalizedAllowed.length > 0) {
+      const matchedProjectId = normalizedAllowed.find((pid) => payload.aud === pid);
+      if (!matchedProjectId) {
+        return { ok: false, reason: 'AUD_MISMATCH' };
+      }
+      if (payload.iss !== `https://securetoken.google.com/${matchedProjectId}`) {
+        return { ok: false, reason: 'ISS_MISMATCH' };
+      }
+    }
+    if (!payload.sub || typeof payload.sub !== 'string') {
+      return { ok: false, reason: 'MISSING_SUB' };
+    }
+    if (!payload.exp || Number(payload.exp) <= nowSec - 300) {
+      return { ok: false, reason: 'TOKEN_EXPIRED' };
+    }
+    if (payload.iat && Number(payload.iat) > nowSec + 300) {
+      return { ok: false, reason: 'TOKEN_IAT_FUTURE' };
+    }
+
+    const emailFromToken = String(
+      payload.email || payload.firebase?.identities?.email?.[0] || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (!emailFromToken) {
+      return { ok: false, reason: 'MISSING_EMAIL' };
+    }
+
+    return {
+      ok: true,
+      uid: payload.sub,
+      email: emailFromToken,
+      emailVerified: payload.email_verified !== false,
+      displayName: String(payload.name || '').trim(),
+    };
+  }
+
   app.post('/api/auth/firebase-google-session', async (req, res) => {
     const idToken = typeof req.body?.idToken === 'string' ? req.body.idToken.trim() : '';
     const rememberMe = req.body?.rememberMe !== false;
@@ -10443,74 +10570,116 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       return;
     }
 
-    let firebaseWebApiKey = String(process.env.VITE_FIREBASE_API_KEY || '').trim();
-    if (!firebaseWebApiKey) {
-      try {
-        const cfgPath = path.join(APP_ROOT_DIR, 'firebase-applet-config.json');
-        if (fs.existsSync(cfgPath)) {
-          const parsedCfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-          firebaseWebApiKey = String(parsedCfg?.apiKey || '').trim();
-        }
-      } catch {
-        // ignore config read error
-      }
-    }
+    const allowedProjectIds: string[] = [];
+    const candidateWebApiKeys: Array<{ apiKey: string; authDomain: string }> = [];
+    const envProjectId = String(
+      process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || ''
+    ).trim();
+    const envApiKey = String(process.env.VITE_FIREBASE_API_KEY || '').trim();
+    const envAuthDomain = String(process.env.VITE_FIREBASE_AUTH_DOMAIN || '').trim();
+    if (envProjectId) allowedProjectIds.push(envProjectId);
+    if (envApiKey) candidateWebApiKeys.push({ apiKey: envApiKey, authDomain: envAuthDomain });
 
-    if (!firebaseWebApiKey) {
-      res.status(503).json({
-        ok: false,
-        noticeCode: 'NETWORK_DISCONNECTED',
-        message: 'Máy chủ chưa có cấu hình Firebase Web SDK để xác thực phiên Google.',
-      });
-      return;
+    try {
+      const cfgPath = path.join(APP_ROOT_DIR, 'firebase-applet-config.json');
+      if (fs.existsSync(cfgPath)) {
+        const parsedCfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        const cfgProjectId = String(parsedCfg?.projectId || '').trim();
+        const cfgApiKey = String(parsedCfg?.apiKey || '').trim();
+        const cfgAuthDomain = String(parsedCfg?.authDomain || '').trim();
+        if (cfgProjectId && !allowedProjectIds.includes(cfgProjectId)) {
+          allowedProjectIds.push(cfgProjectId);
+        }
+        if (cfgApiKey && !candidateWebApiKeys.some((k) => k.apiKey === cfgApiKey)) {
+          candidateWebApiKeys.push({ apiKey: cfgApiKey, authDomain: cfgAuthDomain });
+        }
+      }
+    } catch {
+      // ignore config read error
     }
 
     let verifiedEmail = '';
     let verifiedUid = '';
     let verifiedDisplayName = '';
+    let emailVerifiedFlag = true;
+    let verificationReason = '';
+
+    // Bước 1: Xác thực chữ ký mật mã RS256 trực tiếp bằng chứng thư công khai X.509 của Google (không bị chặn Referer API key)
     try {
-      const lookupRes = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseWebApiKey)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }),
+      const jwtResult = await verifyFirebaseIdTokenRS256(idToken, allowedProjectIds);
+      if (jwtResult.ok && jwtResult.email) {
+        verifiedEmail = jwtResult.email;
+        verifiedUid = jwtResult.uid || '';
+        verifiedDisplayName = jwtResult.displayName || '';
+        emailVerifiedFlag = jwtResult.emailVerified !== false;
+      } else {
+        verificationReason = jwtResult.reason || 'JWT_VERIFY_FAILED';
+      }
+    } catch (jwtErr) {
+      verificationReason = jwtErr instanceof Error ? jwtErr.message : 'X509_FETCH_FAILED';
+    }
+
+    // Bước 2: Dự phòng gọi Identity Toolkit nếu chứng thư X.509 tạm lỗi mạng
+    if (!verifiedEmail && candidateWebApiKeys.length > 0) {
+      for (const candidate of candidateWebApiKeys) {
+        if (verifiedEmail) break;
+        try {
+          const lookupRes = await fetch(
+            `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(candidate.apiKey)}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(candidate.authDomain ? { Referer: `https://${candidate.authDomain}/` } : {}),
+              },
+              body: JSON.stringify({ idToken }),
+            }
+          );
+        const lookupJson = (await lookupRes.json().catch(() => null)) as {
+          users?: Array<{
+            localId?: string;
+            email?: string;
+            emailVerified?: boolean;
+            displayName?: string;
+            disabled?: boolean;
+            providerUserInfo?: Array<{ email?: string; displayName?: string }>;
+          }>;
+        } | null;
+        const fbUser = Array.isArray(lookupJson?.users) ? lookupJson.users[0] : null;
+        const resolvedEmail = String(
+          fbUser?.email || fbUser?.providerUserInfo?.[0]?.email || ''
+        )
+          .trim()
+          .toLowerCase();
+        if (lookupRes.ok && fbUser && resolvedEmail && !fbUser.disabled) {
+          verifiedEmail = resolvedEmail;
+          verifiedUid = String(fbUser.localId || '').trim();
+          verifiedDisplayName = String(
+            fbUser.displayName || fbUser.providerUserInfo?.[0]?.displayName || ''
+          ).trim();
+          emailVerifiedFlag = fbUser.emailVerified !== false;
         }
-      );
-      const lookupJson = (await lookupRes.json().catch(() => null)) as {
-        users?: Array<{
-          localId?: string;
-          email?: string;
-          emailVerified?: boolean;
-          displayName?: string;
-          disabled?: boolean;
-        }>;
-      } | null;
-      const fbUser = Array.isArray(lookupJson?.users) ? lookupJson.users[0] : null;
-      if (!lookupRes.ok || !fbUser || !fbUser.email || fbUser.disabled) {
-        res.status(401).json({
-          ok: false,
-          noticeCode: 'INVALID_CREDENTIALS',
-          message: 'Phiên đăng nhập Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.',
-        });
-        return;
+        } catch {
+          // giữ nguyên verificationReason
+        }
       }
-      if (fbUser.emailVerified === false) {
-        res.status(403).json({
-          ok: false,
-          noticeCode: 'ACCOUNT_NOT_ACTIVATED',
-          message: 'Email tài khoản Google của bạn chưa được xác minh.',
-        });
-        return;
-      }
-      verifiedEmail = String(fbUser.email).trim().toLowerCase();
-      verifiedUid = String(fbUser.localId || '').trim();
-      verifiedDisplayName = String(fbUser.displayName || '').trim();
-    } catch {
-      res.status(502).json({
+    }
+
+    if (!verifiedEmail) {
+      console.warn('[Google Firebase Auth] Token verification rejected:', verificationReason);
+      res.status(401).json({
         ok: false,
-        noticeCode: 'NETWORK_DISCONNECTED',
-        message: 'Không thể kết nối máy chủ xác thực Google Firebase. Vui lòng thử lại.',
+        noticeCode: 'INVALID_CREDENTIALS',
+        message: 'Phiên đăng nhập Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.',
+      });
+      return;
+    }
+
+    if (!emailVerifiedFlag) {
+      res.status(403).json({
+        ok: false,
+        noticeCode: 'ACCOUNT_NOT_ACTIVATED',
+        message: 'Email tài khoản Google của bạn chưa được xác minh.',
       });
       return;
     }
@@ -55227,7 +55396,17 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
         'Warning: dist/index.html not found. Run "npm run build" before starting in production.'
       );
     }
-    app.use(express.static(distDir));
+    app.use(
+      express.static(distDir, {
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+          } else if (filePath.endsWith('.wasm')) {
+            res.setHeader('Content-Type', 'application/wasm');
+          }
+        },
+      })
+    );
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api')) return next();
       if (fs.existsSync(distIndexHtml)) {

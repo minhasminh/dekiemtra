@@ -4081,6 +4081,30 @@
         "lastLoginAt": "2026-11-06T15:02:46.931Z",
         "loginHistory": [
           {
+            "id": "lh-1795820636599",
+            "timestamp": "2026-11-27T23:03:56.541Z",
+            "ipOrClient": "127.0.0.1",
+            "authMethod": "PBKDF2_BACKEND",
+            "status": "INVALID_CREDENTIALS",
+            "note": "Sai thông tin xác thực (đã trả thông báo ẩn danh chống dò tài khoản)."
+          },
+          {
+            "id": "lh-1795820636491",
+            "timestamp": "2026-11-27T23:03:56.437Z",
+            "ipOrClient": "127.0.0.1",
+            "authMethod": "PBKDF2_BACKEND",
+            "status": "INVALID_CREDENTIALS",
+            "note": "Sai thông tin xác thực (đã trả thông báo ẩn danh chống dò tài khoản)."
+          },
+          {
+            "id": "lh-1795820448537",
+            "timestamp": "2026-11-27T23:00:48.482Z",
+            "ipOrClient": "127.0.0.1",
+            "authMethod": "PBKDF2_BACKEND",
+            "status": "INVALID_CREDENTIALS",
+            "note": "Sai thông tin xác thực (đã trả thông báo ẩn danh chống dò tài khoản)."
+          },
+          {
             "id": "lh-1793977366955",
             "timestamp": "2026-11-06T15:02:46.931Z",
             "ipOrClient": "Trình duyệt EDU TEST AI",
@@ -6156,6 +6180,63 @@
     "Approvals": [],
     "ExportRecords": [],
     "AuditLogs": [
+      {
+        "id": "audit-1795820636599-d42l5",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "UNAUTHORIZED_ACCESS_BLOCKED",
+        "targetType": "AUTH_LOGIN",
+        "targetId": "user-school-admin-a",
+        "summary": "Đăng nhập thất bại (sai mật khẩu) trên tài khoản minhld@hue.edu.vn.",
+        "httpStatus": 401,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-27T23:03:56.599Z",
+        "updatedAt": "2026-11-27T23:03:56.599Z",
+        "status": "DENIED"
+      },
+      {
+        "id": "audit-1795820636491-tq8ve",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "UNAUTHORIZED_ACCESS_BLOCKED",
+        "targetType": "AUTH_LOGIN",
+        "targetId": "user-school-admin-a",
+        "summary": "Đăng nhập thất bại (sai mật khẩu) trên tài khoản minhld@hue.edu.vn.",
+        "httpStatus": 401,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-27T23:03:56.491Z",
+        "updatedAt": "2026-11-27T23:03:56.491Z",
+        "status": "DENIED"
+      },
+      {
+        "id": "audit-1795820448538-sqg5i",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "UNAUTHORIZED_ACCESS_BLOCKED",
+        "targetType": "AUTH_LOGIN",
+        "targetId": "user-school-admin-a",
+        "summary": "Đăng nhập thất bại (sai mật khẩu) trên tài khoản minhld@hue.edu.vn.",
+        "httpStatus": 401,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-27T23:00:48.538Z",
+        "updatedAt": "2026-11-27T23:00:48.538Z",
+        "status": "DENIED"
+      },
       {
         "id": "audit-1794524407248-xanq3",
         "schoolId": "SCHOOL_C",
@@ -31265,7 +31346,7 @@
         "status": "ACTIVE",
         "isTestTenant": false,
         "createdAt": "2025-09-01T00:00:00.000Z",
-        "updatedAt": "2026-11-13T03:39:29.861Z"
+        "updatedAt": "2026-11-27T23:03:52.313Z"
       },
       "sch-tieu-hoc-a": {
         "id": "sch-tieu-hoc-a",
@@ -31573,7 +31654,7 @@
           "isTestTenant": false,
           "createdBy": "user-admin-sys",
           "createdAt": "2025-09-01T00:00:00.000Z",
-          "updatedAt": "2026-11-13T03:39:29.861Z"
+          "updatedAt": "2026-11-27T23:03:52.313Z"
         },
         "users": [
           {
@@ -35558,6 +35639,30 @@
             "lastLoginAt": "2026-11-06T15:02:46.931Z",
             "loginHistory": [
               {
+                "id": "lh-1795820636599",
+                "timestamp": "2026-11-27T23:03:56.541Z",
+                "ipOrClient": "127.0.0.1",
+                "authMethod": "PBKDF2_BACKEND",
+                "status": "INVALID_CREDENTIALS",
+                "note": "Sai thông tin xác thực (đã trả thông báo ẩn danh chống dò tài khoản)."
+              },
+              {
+                "id": "lh-1795820636491",
+                "timestamp": "2026-11-27T23:03:56.437Z",
+                "ipOrClient": "127.0.0.1",
+                "authMethod": "PBKDF2_BACKEND",
+                "status": "INVALID_CREDENTIALS",
+                "note": "Sai thông tin xác thực (đã trả thông báo ẩn danh chống dò tài khoản)."
+              },
+              {
+                "id": "lh-1795820448537",
+                "timestamp": "2026-11-27T23:00:48.482Z",
+                "ipOrClient": "127.0.0.1",
+                "authMethod": "PBKDF2_BACKEND",
+                "status": "INVALID_CREDENTIALS",
+                "note": "Sai thông tin xác thực (đã trả thông báo ẩn danh chống dò tài khoản)."
+              },
+              {
                 "id": "lh-1793977366955",
                 "timestamp": "2026-11-06T15:02:46.931Z",
                 "ipOrClient": "Trình duyệt EDU TEST AI",
@@ -35834,8 +35939,8 @@
             "grade": 9,
             "status": "APPROVED",
             "createdBy": "user-admin-sys",
-            "createdAt": "2026-11-13T03:39:29.861Z",
-            "updatedAt": "2026-11-13T03:39:29.861Z"
+            "createdAt": "2026-11-27T23:03:52.313Z",
+            "updatedAt": "2026-11-27T23:03:52.313Z"
           }
         ],
         "approvals": [],

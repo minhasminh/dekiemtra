@@ -9,6 +9,7 @@ import {
 } from '../../types/domain';
 import {
   executeFirebaseSendPasswordResetEmailNeutral,
+  firebaseConfig,
   signInWithGoogleFirebase,
   signOutFirebase,
   waitForFirebaseAuthUser,
@@ -34,13 +35,24 @@ const DEFAULT_BRANDING_FALLBACK: SchoolBrandingConfig = {
 
 export function resolveApiUrl(apiPath: string): string {
   const normalizedPath = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
+  const isApiRoute = normalizedPath === '/api' || normalizedPath.startsWith('/api/');
   try {
     const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
     const rawBase = env?.VITE_API_BASE_URL;
-    const cleaned = String(rawBase || '')
+    let cleaned = String(rawBase || '')
       .trim()
       .replace(/\/+$/, '');
+    if (cleaned === 'api') {
+      cleaned = '/api';
+    }
     if (cleaned) {
+      if (isApiRoute && (cleaned === '/api' || cleaned.endsWith('/api'))) {
+        const prefixWithoutApi = cleaned.slice(0, -4).replace(/\/+$/, '');
+        return `${prefixWithoutApi}${normalizedPath}`;
+      }
+      if (cleaned === '/' || cleaned === '.') {
+        return normalizedPath;
+      }
       return `${cleaned}${normalizedPath}`;
     }
     const viteBaseUrl = String(env?.BASE_URL || '/')
@@ -364,7 +376,7 @@ export async function loginWithGoogleFirebase(rememberMe: boolean): Promise<Auth
       };
     }
 
-    const idToken = await fbUser.getIdToken();
+    const idToken = await fbUser.getIdToken(true);
 
     // Ưu tiên trao đổi ID Token với Backend Node.js để ánh xạ đúng vai trò trong 66 tài khoản trường học
     try {
@@ -374,7 +386,7 @@ export async function loginWithGoogleFirebase(rememberMe: boolean): Promise<Auth
         body: JSON.stringify({ idToken, rememberMe }),
       });
       const data = await parseJsonOrNull(res);
-      if (data) {
+      if (data && res.status !== 404) {
         if (res.ok && data.ok && data.session) {
           const session = data.session as AuthenticatedUserSession;
           saveSessionToken(session.sessionToken, Boolean(rememberMe));
@@ -425,7 +437,7 @@ export async function loginWithGoogleFirebase(rememberMe: boolean): Promise<Auth
       return {
         ok: false,
         noticeCode: 'NO_ACCESS_PERMISSION',
-        message: `Tên miền "${host}" chưa được cấp phép trong Firebase Authentication. Hãy vào Firebase Console → Authentication → Settings → Authorized domains và thêm "${host}".`,
+        message: `Tên miền "${host}" chưa được cấp phép trong Firebase Authentication (dự án "${firebaseConfig.projectId}"). Hãy vào Firebase Console → Authentication → Settings → Authorized domains và thêm "${host}".`,
       };
     }
     return {
