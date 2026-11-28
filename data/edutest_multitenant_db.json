@@ -161,7 +161,7 @@
         ],
         "departmentName": "Tổ khoa học tự nhiên",
         "assignedSubjects": [
-          "Sinh học"
+          "Khoa học tự nhiên"
         ],
         "assignedGrades": [
           6,
@@ -177,7 +177,7 @@
         "hasSecretExamProfessionalClearance": false,
         "createdBy": "user-admin-sys",
         "createdAt": "2026-09-01T08:00:00Z",
-        "updatedAt": "2026-11-03T23:00:11.580Z",
+        "updatedAt": "2026-11-28T09:04:22.450Z",
         "status": "ACTIVE",
         "lastLoginAt": "2026-11-03T23:00:11.580Z",
         "loginHistory": [],
@@ -202,6 +202,24 @@
             ],
             "assessmentMode": "PAPER_EXAM"
           }
+        ],
+        "customFunctionalPermissions": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
         ]
       },
       {
@@ -502,7 +520,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -880,7 +898,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1012,7 +1030,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1140,7 +1158,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1207,7 +1225,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1277,7 +1295,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1347,7 +1365,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1537,7 +1555,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1753,7 +1771,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1823,7 +1841,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1893,7 +1911,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -1962,7 +1980,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2032,7 +2050,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2282,7 +2300,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2414,7 +2432,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2488,7 +2506,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2564,7 +2582,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2696,7 +2714,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2885,7 +2903,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -2955,7 +2973,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -3023,7 +3041,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -3090,7 +3108,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -3407,7 +3425,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -3475,7 +3493,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -3548,7 +3566,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -3620,7 +3638,7 @@
             "assessmentMode": "PAPER_EXAM"
           },
           {
-            "subjectId": "SUB_PRI_TIENGVIET",
+            "subjectId": "SUB_PRI_TV",
             "subjectName": "Tiếng Việt",
             "educationLevelId": "PRIMARY",
             "grades": [
@@ -6181,6 +6199,82 @@
     "ExportRecords": [],
     "AuditLogs": [
       {
+        "id": "audit-1795856662481-dz5r2",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "PERMISSION_CHANGE",
+        "targetType": "TEACHER_PERMISSION_GRANTS",
+        "targetId": "user-nda-pdf-01",
+        "summary": "Cập nhật phân quyền cho giáo viên Lê Thị Thu Ái (thuai2411): 4 tổ hợp [Cấp học - Môn - Khối], 16 mã quyền chức năng.",
+        "httpStatus": 200,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-28T09:04:22.481Z",
+        "updatedAt": "2026-11-28T09:04:22.481Z",
+        "status": "ALLOWED"
+      },
+      {
+        "id": "audit-1795856662391-jhsow",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "PERMISSION_CHANGE",
+        "targetType": "TEACHER_PERMISSION_GRANTS",
+        "targetId": "user-nda-pdf-01",
+        "summary": "Cập nhật phân quyền cho giáo viên Lê Thị Thu Ái (thuai2411): 8 tổ hợp [Cấp học - Môn - Khối], 16 mã quyền chức năng.",
+        "httpStatus": 200,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-28T09:04:22.391Z",
+        "updatedAt": "2026-11-28T09:04:22.391Z",
+        "status": "ALLOWED"
+      },
+      {
+        "id": "audit-1795856546017-6kdvp",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "PERMISSION_CHANGE",
+        "targetType": "TEACHER_PERMISSION_GRANTS",
+        "targetId": "user-nda-pdf-01",
+        "summary": "Cập nhật phân quyền cho giáo viên Lê Thị Thu Ái (thuai2411): 4 tổ hợp [Cấp học - Môn - Khối], 16 mã quyền chức năng.",
+        "httpStatus": 200,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-28T09:02:26.017Z",
+        "updatedAt": "2026-11-28T09:02:26.017Z",
+        "status": "ALLOWED"
+      },
+      {
+        "id": "audit-1795856545903-bsacy",
+        "schoolId": "SCHOOL_A",
+        "actorUserId": "user-school-admin-a",
+        "actorName": "Lê Đức Minh (Quản trị viên Trường)",
+        "actorRoles": [
+          "SCHOOL_ADMIN",
+          "SYSTEM_ADMIN"
+        ],
+        "action": "PERMISSION_CHANGE",
+        "targetType": "TEACHER_PERMISSION_GRANTS",
+        "targetId": "user-nda-pdf-01",
+        "summary": "Cập nhật phân quyền cho giáo viên Lê Thị Thu Ái (thuai2411): 6 tổ hợp [Cấp học - Môn - Khối], 16 mã quyền chức năng.",
+        "httpStatus": 200,
+        "createdBy": "user-school-admin-a",
+        "createdAt": "2026-11-28T09:02:25.903Z",
+        "updatedAt": "2026-11-28T09:02:25.903Z",
+        "status": "ALLOWED"
+      },
+      {
         "id": "audit-1795820636599-d42l5",
         "schoolId": "SCHOOL_A",
         "actorUserId": "user-school-admin-a",
@@ -8198,8 +8292,8 @@
         ],
         "GrantedBy": "Quản trị hệ thống (admin.nda)",
         "GrantedAt": "2026-11-03T23:06:52.789Z",
-        "UpdatedAt": "2026-11-03T23:06:52.789Z",
-        "Status": "ACTIVE"
+        "UpdatedAt": "2026-11-28T09:02:25.865Z",
+        "Status": "REVOKED"
       },
       {
         "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g7",
@@ -8231,8 +8325,8 @@
         ],
         "GrantedBy": "Quản trị hệ thống (admin.nda)",
         "GrantedAt": "2026-11-03T23:06:52.789Z",
-        "UpdatedAt": "2026-11-03T23:06:52.789Z",
-        "Status": "ACTIVE"
+        "UpdatedAt": "2026-11-28T09:02:25.865Z",
+        "Status": "REVOKED"
       },
       {
         "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g8",
@@ -8264,8 +8358,8 @@
         ],
         "GrantedBy": "Quản trị hệ thống (admin.nda)",
         "GrantedAt": "2026-11-03T23:06:52.789Z",
-        "UpdatedAt": "2026-11-03T23:06:52.789Z",
-        "Status": "ACTIVE"
+        "UpdatedAt": "2026-11-28T09:02:25.865Z",
+        "Status": "REVOKED"
       },
       {
         "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g9",
@@ -8297,8 +8391,8 @@
         ],
         "GrantedBy": "Quản trị hệ thống (admin.nda)",
         "GrantedAt": "2026-11-03T23:06:52.789Z",
-        "UpdatedAt": "2026-11-03T23:06:52.789Z",
-        "Status": "ACTIVE"
+        "UpdatedAt": "2026-11-28T09:02:25.865Z",
+        "Status": "REVOKED"
       },
       {
         "id": "tpg-user-nda-pdf-06-SUB_PRI_TOAN-g1",
@@ -19372,6 +19466,732 @@
         "GrantedBy": "Quản trị hệ thống (admin.nda)",
         "GrantedAt": "2026-11-11T15:46:32.659Z",
         "UpdatedAt": "2026-11-11T15:46:32.659Z",
+        "Status": "ACTIVE"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g6-1795856545865-59",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 6,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.865Z",
+        "UpdatedAt": "2026-11-28T09:02:25.975Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g7-1795856545866-205",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 7,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.865Z",
+        "UpdatedAt": "2026-11-28T09:02:25.975Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g8-1795856545866-368",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 8,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.865Z",
+        "UpdatedAt": "2026-11-28T09:02:25.975Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g9-1795856545866-42",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 9,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.865Z",
+        "UpdatedAt": "2026-11-28T09:02:25.975Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_CONGNGHE-g6-1795856545866-857",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 6,
+        "SubjectId": "SUB_SEC_CONGNGHE",
+        "SubjectName": "Công nghệ",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.865Z",
+        "UpdatedAt": "2026-11-28T09:02:25.975Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_CONGNGHE-g7-1795856545866-444",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 7,
+        "SubjectId": "SUB_SEC_CONGNGHE",
+        "SubjectName": "Công nghệ",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.865Z",
+        "UpdatedAt": "2026-11-28T09:02:25.975Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g6-1795856545975-127",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 6,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.975Z",
+        "UpdatedAt": "2026-11-28T09:04:22.360Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g7-1795856545975-378",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 7,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.975Z",
+        "UpdatedAt": "2026-11-28T09:04:22.360Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g8-1795856545975-940",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 8,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.975Z",
+        "UpdatedAt": "2026-11-28T09:04:22.360Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g9-1795856545975-803",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 9,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:02:25.975Z",
+        "UpdatedAt": "2026-11-28T09:04:22.360Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g6-1795856662360-763",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 6,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g7-1795856662360-62",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 7,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_CONGNGHE-g8-1795856662360-10",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 8,
+        "SubjectId": "SUB_SEC_CONGNGHE",
+        "SubjectName": "Công nghệ",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_CONGNGHE-g9-1795856662360-669",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 9,
+        "SubjectId": "SUB_SEC_CONGNGHE",
+        "SubjectName": "Công nghệ",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_GDDP-g6-1795856662360-822",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 6,
+        "SubjectId": "SUB_SEC_GDDP",
+        "SubjectName": "Nội dung giáo dục địa phương",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_GDDP-g7-1795856662360-302",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 7,
+        "SubjectId": "SUB_SEC_GDDP",
+        "SubjectName": "Nội dung giáo dục địa phương",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_GDDP-g8-1795856662360-816",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 8,
+        "SubjectId": "SUB_SEC_GDDP",
+        "SubjectName": "Nội dung giáo dục địa phương",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_GDDP-g9-1795856662360-494",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 9,
+        "SubjectId": "SUB_SEC_GDDP",
+        "SubjectName": "Nội dung giáo dục địa phương",
+        "AssessmentMode": "HYBRID_PAPER_PRACTICE",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.360Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "REVOKED"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g6-1795856662450-104",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 6,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.450Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "ACTIVE"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g7-1795856662450-98",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 7,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.450Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "ACTIVE"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g8-1795856662450-154",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 8,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.450Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
+        "Status": "ACTIVE"
+      },
+      {
+        "id": "tpg-user-nda-pdf-01-SUB_SEC_KHTN-g9-1795856662450-482",
+        "UserId": "user-nda-pdf-01",
+        "SchoolId": "SCHOOL_A",
+        "RoleId": "TEACHER",
+        "EducationLevelId": "LOWER_SECONDARY",
+        "GradeId": 9,
+        "SubjectId": "SUB_SEC_KHTN",
+        "SubjectName": "Khoa học tự nhiên",
+        "AssessmentMode": "PAPER_EXAM",
+        "PermissionCodes": [
+          "VIEW_CURRICULUM",
+          "VIEW_QUESTION_BANK",
+          "CREATE_QUESTION",
+          "EDIT_QUESTION",
+          "DELETE_DRAFT_QUESTION",
+          "USE_AI_QUESTION_GENERATOR",
+          "CREATE_EXAM_MATRIX",
+          "CREATE_EXAM_SPECIFICATION",
+          "CREATE_EXAM_PAPER",
+          "GENERATE_MULTI_EXAM_CODES",
+          "USE_AI_QUALITY_REVIEW",
+          "EDIT_EXAM_PAPER",
+          "SUBMIT_FOR_APPRAISAL",
+          "EXPORT_EXAM_WORD_PDF",
+          "VIEW_RESULT_REPORTS",
+          "ANALYZE_QUESTION_QUALITY"
+        ],
+        "GrantedBy": "Lê Đức Minh (Quản trị viên Trường) (minhld@hue.edu.vn)",
+        "GrantedAt": "2026-11-28T09:04:22.450Z",
+        "UpdatedAt": "2026-11-28T09:04:22.450Z",
         "Status": "ACTIVE"
       }
     ],
@@ -31346,7 +32166,7 @@
         "status": "ACTIVE",
         "isTestTenant": false,
         "createdAt": "2025-09-01T00:00:00.000Z",
-        "updatedAt": "2026-11-27T23:03:52.313Z"
+        "updatedAt": "2026-11-28T09:04:12.787Z"
       },
       "sch-tieu-hoc-a": {
         "id": "sch-tieu-hoc-a",
@@ -31654,7 +32474,7 @@
           "isTestTenant": false,
           "createdBy": "user-admin-sys",
           "createdAt": "2025-09-01T00:00:00.000Z",
-          "updatedAt": "2026-11-27T23:03:52.313Z"
+          "updatedAt": "2026-11-28T09:04:12.787Z"
         },
         "users": [
           {
@@ -31735,7 +32555,7 @@
             "hasSecretExamProfessionalClearance": false,
             "createdBy": "user-admin-sys",
             "createdAt": "2026-09-01T08:00:00Z",
-            "updatedAt": "2026-11-03T23:00:11.580Z",
+            "updatedAt": "2026-11-28T09:02:25.975Z",
             "status": "ACTIVE",
             "lastLoginAt": "2026-11-03T23:00:11.580Z",
             "loginHistory": [],
@@ -31760,6 +32580,24 @@
                 ],
                 "assessmentMode": "PAPER_EXAM"
               }
+            ],
+            "customFunctionalPermissions": [
+              "VIEW_CURRICULUM",
+              "VIEW_QUESTION_BANK",
+              "CREATE_QUESTION",
+              "EDIT_QUESTION",
+              "DELETE_DRAFT_QUESTION",
+              "USE_AI_QUESTION_GENERATOR",
+              "CREATE_EXAM_MATRIX",
+              "CREATE_EXAM_SPECIFICATION",
+              "CREATE_EXAM_PAPER",
+              "GENERATE_MULTI_EXAM_CODES",
+              "USE_AI_QUALITY_REVIEW",
+              "EDIT_EXAM_PAPER",
+              "SUBMIT_FOR_APPRAISAL",
+              "EXPORT_EXAM_WORD_PDF",
+              "VIEW_RESULT_REPORTS",
+              "ANALYZE_QUESTION_QUALITY"
             ]
           },
           {
@@ -35939,8 +36777,8 @@
             "grade": 9,
             "status": "APPROVED",
             "createdBy": "user-admin-sys",
-            "createdAt": "2026-11-27T23:03:52.313Z",
-            "updatedAt": "2026-11-27T23:03:52.313Z"
+            "createdAt": "2026-11-28T09:04:12.787Z",
+            "updatedAt": "2026-11-28T09:04:12.787Z"
           }
         ],
         "approvals": [],

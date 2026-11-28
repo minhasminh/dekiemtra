@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   reauthenticateWithCredential,
   sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   updatePassword,
@@ -805,6 +806,14 @@ export async function signInWithGoogleFirebase(): Promise<FirebaseUser> {
       console.warn('Firestore profile sync notice:', error);
     }
   }
+  return cred.user;
+}
+
+export async function signInWithEmailPasswordFirebase(
+  email: string,
+  password: string
+): Promise<FirebaseUser> {
+  const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
   return cred.user;
 }
 

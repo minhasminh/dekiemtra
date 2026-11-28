@@ -13397,8 +13397,22 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
       .map((u: any) => buildTeacherPermissionProfile(u.id, lookupIndex))
       .filter(Boolean);
 
+    const existingCurriculumSubjects = Array.isArray(collections.SchoolCurriculumSubjects)
+      ? collections.SchoolCurriculumSubjects
+      : [];
+    const existingSubjectIdSet = new Set(
+      existingCurriculumSubjects.map((c: any) => String(c?.subjectId || '').trim())
+    );
+    const missingDefaultSubjects = INITIAL_SCHOOL_CURRICULUM_SUBJECTS.filter(
+      (defItem) => !existingSubjectIdSet.has(defItem.subjectId)
+    );
     const allCurriculumSubjects =
-      collections.SchoolCurriculumSubjects || INITIAL_SCHOOL_CURRICULUM_SUBJECTS;
+      existingCurriculumSubjects.length > 0
+        ? [...existingCurriculumSubjects, ...missingDefaultSubjects]
+        : [...INITIAL_SCHOOL_CURRICULUM_SUBJECTS];
+    if (missingDefaultSubjects.length > 0 || existingCurriculumSubjects.length === 0) {
+      collections.SchoolCurriculumSubjects = allCurriculumSubjects;
+    }
     const curriculumSubjects = allCurriculumSubjects.filter((c: any) => {
       if (targetSchoolId === 'SCHOOL_B') return c.educationLevelId === 'PRIMARY';
       if (targetSchoolId === 'SCHOOL_C') return c.educationLevelId === 'LOWER_SECONDARY';
@@ -14102,10 +14116,24 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
 
     const collections = multiTenantDb.collections as Record<string, any[]>;
     const users = collections.Users || [];
-    const catalog = collections.SchoolCurriculumSubjects || INITIAL_SCHOOL_CURRICULUM_SUBJECTS;
+    const existingCatalog = Array.isArray(collections.SchoolCurriculumSubjects)
+      ? collections.SchoolCurriculumSubjects
+      : [];
+    const existingCatalogIds = new Set(
+      existingCatalog.map((c: any) => String(c?.subjectId || '').trim())
+    );
+    const catalog = [
+      ...existingCatalog,
+      ...INITIAL_SCHOOL_CURRICULUM_SUBJECTS.filter((d) => !existingCatalogIds.has(d.subjectId)),
+    ];
+    collections.SchoolCurriculumSubjects = catalog;
 
     // Kiểm tra IX.6: Thẩm quyền của người quản trị thực hiện lưu & chặn tự cấp quyền (Mục V.3 & VI.5)
-    const adminActor = users.find((u: any) => u.id === adminUserId);
+    const authHeader = String(req.headers.authorization || '');
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    const sessionActorId = bearerToken ? enhancedAuthSessions.get(bearerToken)?.userId : '';
+    const effectiveAdminUserId = sessionActorId || adminUserId;
+    const adminActor = users.find((u: any) => u.id === effectiveAdminUserId) || users.find((u: any) => u.id === adminUserId);
     const adminRoles: string[] = Array.isArray(adminActor?.roles)
       ? adminActor.roles
       : adminUserId === 'user-admin-sys'
@@ -14394,7 +14422,10 @@ Hãy trả về danh sách các nhận định chuyên môn (aiFindings) nếu p
 
     // Thực hiện Lưu vào CSDL thực (Mục VIII & Mục V: Khử trùng lặp quyền khi lưu nhiều lần + Bảo toàn môn khác nếu sửa cục bộ)
     const nowIso = new Date().toISOString();
-    const existingGrants = collections.TeacherPermissionGrants || [];
+    if (!Array.isArray(collections.TeacherPermissionGrants)) {
+      collections.TeacherPermissionGrants = [];
+    }
+    const existingGrants = collections.TeacherPermissionGrants;
     const preserveUnmentionedSubjects = Boolean(req.body?.preserveUnmentionedSubjects);
 
     // Khử trùng lặp tuyệt đối mã quyền chức năng (Mục V.3: Không nhân đôi quyền khi lưu nhiều lần)

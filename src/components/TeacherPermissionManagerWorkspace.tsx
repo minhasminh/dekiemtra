@@ -44,7 +44,11 @@ import {
   VisualPermissionFullQaAuditReport,
   TeacherPermissionTemplate
 } from '../types/domain';
-import { loginWithServerRoleScenario } from '../services/auth/authSessionService';
+import {
+  getStoredSessionToken,
+  loginWithServerRoleScenario,
+  resolveApiUrl
+} from '../services/auth/authSessionService';
 import { TeacherPermissionTemplatesPanel } from './TeacherPermissionTemplatesPanel';
 
 interface TeacherPermissionManagerWorkspaceProps {
@@ -272,8 +276,12 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
         if (schoolId) {
           qs.set('schoolId', schoolId);
         }
+        const { token } = getStoredSessionToken();
         const res = await fetch(
-          `/api/security/teacher-permissions/catalog?${qs.toString()}`
+          resolveApiUrl(`/api/security/teacher-permissions/catalog?${qs.toString()}`),
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
         );
         const json = await res.json();
         if (json.ok) {
@@ -1006,23 +1014,67 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
   // Save handler (Sections VIII, IX, X)
   const handleSavePermissions = async (forceConfirmRevocation: boolean = false) => {
     if (!selectedTeacher) return;
+
+    // Lọc các phân công thuộc cấp học đang được tích chọn để tránh lỗi lệch cấp ẩn
+    const scopedAllocations = allocations.filter((a) =>
+      selectedEducationLevels.includes(a.educationLevelId)
+    );
+    const emptyGradeSubjects = scopedAllocations.filter(
+      (a) => !Array.isArray(a.grades) || a.grades.length === 0
+    );
+    if (emptyGradeSubjects.length > 0) {
+      setStatusBanner({
+        type: 'error',
+        message: 'Không thể lưu phân quyền vì có môn học chưa chọn khối lớp.',
+        details: [
+          `Vui lòng tích chọn ít nhất 1 khối lớp (hoặc bỏ tích môn) cho: ${emptyGradeSubjects
+            .map((s) => s.subjectName)
+            .join(', ')}.`
+        ]
+      });
+      return;
+    }
+    if (scopedAllocations.length === 0) {
+      setStatusBanner({
+        type: 'error',
+        message: 'Không thể lưu phân quyền: Chưa chọn môn học và khối lớp nào.',
+        details: ['Vui lòng chọn ít nhất 1 môn học và 1 khối lớp tương ứng ở Khu vực 4.']
+      });
+      return;
+    }
+
     setSaving(true);
     setStatusBanner(null);
 
     try {
-      const res = await fetch('/api/security/teacher-permissions/save', {
+      const { token } = getStoredSessionToken();
+      const res = await fetch(resolveApiUrl('/api/security/teacher-permissions/save'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           adminUserId: currentActorUserId || 'user-admin-sys',
           userId: selectedTeacher.userId,
           educationLevels: selectedEducationLevels,
           permissionCodes: selectedPermissionCodes,
-          subjectAllocations: allocations,
+          subjectAllocations: scopedAllocations,
           grantReviewerRoleIfAppraiseSelected: grantReviewerRole,
           forceConfirmRevocation
         })
       });
+
+      const contentType = String(res.headers.get('content-type') || '').toLowerCase();
+      if (!contentType.includes('application/json')) {
+        setStatusBanner({
+          type: 'error',
+          message: `Máy chủ Backend không phản hồi JSON khi lưu phân quyền (HTTP ${res.status}).`,
+          details: ['Vui lòng kiểm tra ứng dụng Node.js trên máy chủ đang chạy và thử lại.']
+        });
+        setSaving(false);
+        return;
+      }
 
       const json = await res.json();
 
@@ -1066,6 +1118,9 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
         message: json.message || 'Đã cập nhật phân quyền thành công cho giáo viên.',
         details: [
           `Giáo viên: ${selectedTeacher.fullName} (${selectedTeacher.username})`,
+          `Môn học đã lưu (${scopedAllocations.length} môn): ${scopedAllocations
+            .map((a) => `${a.subjectName} (Lớp ${a.grades.join(', ')})`)
+            .join(' · ')}`,
           `Số bản ghi chuẩn hóa (UserId · SchoolId · RoleId · EducationLevelId · GradeId · SubjectId): ${
             json.savedRecordsCount || 0
           } bản ghi ACTIVE.`
@@ -1772,7 +1827,7 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
                       GV)
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {primarySubjects.slice(0, 8).map((subj) => {
+                      {primarySubjects.map((subj) => {
                         const checked = isBulkSubjectChecked(subj.subjectId);
                         const alloc = getBulkSubjectAllocation(subj.subjectId);
                         return (
@@ -1828,7 +1883,7 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
                       GV)
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {lowerSecondarySubjects.slice(0, 8).map((subj) => {
+                      {lowerSecondarySubjects.map((subj) => {
                         const checked = isBulkSubjectChecked(subj.subjectId);
                         const alloc = getBulkSubjectAllocation(subj.subjectId);
                         return (
@@ -2251,37 +2306,49 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
         </section>
       )}
 
-      {/* Revocation Confirmation Modal for Single Teacher (Mục IX) */}
+      {/* Revocation Confirmation Modal for Single Teacher (Mục IX - Fixed Center Overlay) */}
       {revocationModal && (
-        <div className="rounded-2xl p-5 bg-amber-50 border-2 border-amber-400 text-amber-950 shadow-md space-y-3">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="text-sm font-bold text-amber-900">
-                Cảnh báo thu hồi quyền đối với hồ sơ đang thực hiện (Mục IX)
-              </h3>
-              <ul className="mt-1.5 space-y-1 text-xs text-amber-800 list-disc list-inside">
-                {revocationModal.warnings.map((w, i) => (
-                  <li key={i}>{w}</li>
-                ))}
-              </ul>
-              <div className="mt-3 flex flex-wrap items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleSavePermissions(true)}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer"
-                >
-                  Xác nhận thu hồi & Lưu phân quyền
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRevocationModal(null)}
-                  className="px-4 py-2 rounded-xl bg-white border border-amber-300 text-amber-900 text-xs font-semibold cursor-pointer"
-                >
-                  Hủy thao tác
-                </button>
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        >
+          <div className="w-full max-w-lg rounded-2xl p-6 bg-white border-2 border-amber-400 text-amber-950 shadow-2xl space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-slate-900">
+                  Xác nhận thay đổi / thu hồi quyền phân công
+                </h3>
+                <p className="text-xs text-slate-600 mt-1">
+                  Phân quyền mới của <strong>{selectedTeacher?.fullName}</strong> có điều chỉnh giảm so với phân công cũ. Hãy bấm xác nhận bên dưới để lưu thay đổi vào hệ thống:
+                </p>
+                <ul className="mt-3 space-y-1.5 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-3 list-disc list-inside max-h-48 overflow-y-auto">
+                  {revocationModal.warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRevocationModal(null)}
+                disabled={saving}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold cursor-pointer"
+              >
+                Hủy thao tác
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSavePermissions(true)}
+                disabled={saving}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-60"
+              >
+                {saving ? 'Đang lưu phân quyền...' : 'Xác nhận thu hồi & Lưu phân quyền'}
+              </button>
             </div>
           </div>
         </div>
@@ -3118,6 +3185,46 @@ export const TeacherPermissionManagerWorkspace: React.FC<TeacherPermissionManage
             {saving ? 'Đang lưu vào cơ sở dữ liệu...' : 'Xác nhận & Lưu phân quyền cá nhân'}
           </button>
         </div>
+
+        {statusBanner && (
+          <div
+            role="status"
+            className={`mx-6 mt-5 rounded-xl p-4 border flex items-start justify-between gap-4 ${
+              statusBanner.type === 'success'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                : statusBanner.type === 'warning'
+                ? 'bg-amber-50 border-amber-300 text-amber-950'
+                : 'bg-rose-50 border-rose-300 text-rose-950'
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              {statusBanner.type === 'success' ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              ) : statusBanner.type === 'warning' ? (
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              )}
+              <div>
+                <p className="text-xs font-bold">{statusBanner.message}</p>
+                {statusBanner.details && statusBanner.details.length > 0 && (
+                  <ul className="mt-1 space-y-0.5 text-[11px] opacity-90 list-disc list-inside">
+                    {statusBanner.details.map((d, idx) => (
+                      <li key={idx}>{d}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStatusBanner(null)}
+              className="text-[11px] font-semibold underline opacity-75 hover:opacity-100 cursor-pointer shrink-0"
+            >
+              Đóng
+            </button>
+          </div>
+        )}
 
         <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-5 space-y-3">

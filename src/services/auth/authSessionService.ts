@@ -10,6 +10,7 @@ import {
 import {
   executeFirebaseSendPasswordResetEmailNeutral,
   firebaseConfig,
+  signInWithEmailPasswordFirebase,
   signInWithGoogleFirebase,
   signOutFirebase,
   waitForFirebaseAuthUser,
@@ -33,6 +34,34 @@ const DEFAULT_BRANDING_FALLBACK: SchoolBrandingConfig = {
   updatedBy: 'Hệ thống',
 };
 
+const KNOWN_INTERNAL_SPA_SEGMENTS = new Set([
+  'dashboard',
+  'login',
+  'questions',
+  'exams',
+  'matrix',
+  'admin',
+  'profile',
+  'settings',
+  'workflows',
+]);
+
+function getDetectedBrowserSubpathPrefix(): string {
+  if (typeof window === 'undefined' || !window.location?.pathname) {
+    return '';
+  }
+  const pathname = window.location.pathname;
+  const dirPath = pathname.replace(/\/[^/]*\.[a-z0-9]+$/i, '').replace(/\/+$/, '');
+  if (!dirPath || dirPath === '/') {
+    return '';
+  }
+  const firstSegment = dirPath.replace(/^\/+/, '').split('/')[0]?.toLowerCase() || '';
+  if (!firstSegment || firstSegment === 'api' || KNOWN_INTERNAL_SPA_SEGMENTS.has(firstSegment)) {
+    return '';
+  }
+  return dirPath;
+}
+
 export function resolveApiUrl(apiPath: string): string {
   const normalizedPath = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
   const isApiRoute = normalizedPath === '/api' || normalizedPath.startsWith('/api/');
@@ -48,10 +77,15 @@ export function resolveApiUrl(apiPath: string): string {
     if (cleaned) {
       if (isApiRoute && (cleaned === '/api' || cleaned.endsWith('/api'))) {
         const prefixWithoutApi = cleaned.slice(0, -4).replace(/\/+$/, '');
-        return `${prefixWithoutApi}${normalizedPath}`;
+        if (prefixWithoutApi) {
+          return `${prefixWithoutApi}${normalizedPath}`;
+        }
+        const subpath = getDetectedBrowserSubpathPrefix();
+        return `${subpath}${normalizedPath}`;
       }
       if (cleaned === '/' || cleaned === '.') {
-        return normalizedPath;
+        const subpath = getDetectedBrowserSubpathPrefix();
+        return `${subpath}${normalizedPath}`;
       }
       return `${cleaned}${normalizedPath}`;
     }
@@ -60,6 +94,10 @@ export function resolveApiUrl(apiPath: string): string {
       .replace(/\/+$/, '');
     if (viteBaseUrl && viteBaseUrl.startsWith('/') && viteBaseUrl !== '/') {
       return `${viteBaseUrl}${normalizedPath}`;
+    }
+    const subpath = getDetectedBrowserSubpathPrefix();
+    if (subpath) {
+      return `${subpath}${normalizedPath}`;
     }
   } catch {
     // fallback same-origin
@@ -257,22 +295,87 @@ export async function loginWithCredentials(params: {
   }
 
   try {
-    const res = await fetch(resolveApiUrl('/api/auth/login'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        identifier: params.identifier.trim(),
-        password: params.password,
-        rememberMe: params.rememberMe,
-      }),
+    const payloadBody = JSON.stringify({
+      identifier: params.identifier.trim(),
+      password: params.password,
+      rememberMe: params.rememberMe,
     });
+    const primaryUrl = resolveApiUrl('/api/auth/login');
+    const candidateUrls = [primaryUrl];
+    if (primaryUrl !== '/api/auth/login') {
+      candidateUrls.push('/api/auth/login');
+    } else {
+      const detectedSubpath = getDetectedBrowserSubpathPrefix();
+      if (detectedSubpath) {
+        candidateUrls.push(`${detectedSubpath}/api/auth/login`);
+      }
+    }
 
-    const data = await parseJsonOrNull(res);
-    if (!data) {
+    let res: Response | null = null;
+    let data: Record<string, unknown> | null = null;
+
+    for (const candidateUrl of candidateUrls) {
+      try {
+        const attemptRes = await fetch(candidateUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payloadBody,
+        });
+        const attemptData = await parseJsonOrNull(attemptRes);
+        res = attemptRes;
+        data = attemptData;
+        if (attemptData) {
+          break;
+        }
+      } catch {
+        // thử đường dẫn tiếp theo
+      }
+    }
+
+    if (!res || !data) {
+      // Khi hosting là web tĩnh (chưa chạy Node.js cho /api/auth/login), thử xác thực trực tiếp qua Firebase Email/Password nếu người dùng nhập Email
+      const trimmedIdentifier = params.identifier.trim();
+      if (trimmedIdentifier.includes('@')) {
+        try {
+          const fbUser = await signInWithEmailPasswordFirebase(trimmedIdentifier, params.password);
+          if (fbUser && fbUser.email) {
+            const directSession = buildDirectFirebaseSession(fbUser, params.rememberMe);
+            return {
+              ok: true,
+              message: 'Đăng nhập thành công qua Firebase Authentication.',
+              session: directSession,
+            };
+          }
+        } catch (fbErr: unknown) {
+          const fbCode =
+            fbErr && typeof fbErr === 'object' && 'code' in fbErr
+              ? String((fbErr as { code?: string }).code || '')
+              : '';
+          if (
+            fbCode === 'auth/wrong-password' ||
+            fbCode === 'auth/invalid-credential' ||
+            fbCode === 'auth/user-not-found'
+          ) {
+            return {
+              ok: false,
+              noticeCode: 'INVALID_CREDENTIALS',
+              message: `Hosting hiện chỉ chạy web tĩnh (chưa bật Node.js cho /api/auth/login — HTTP ${res?.status ?? 404}) và không tìm thấy/sai mật khẩu tài khoản này trên Firebase Auth (${firebaseConfig.projectId}). Hãy bấm "Đăng nhập bằng Google" bên dưới, hoặc khởi chạy Node.js (app.js) trên cPanel để đăng nhập bằng 66 tài khoản trường học.`,
+            };
+          }
+          if (fbCode === 'auth/operation-not-allowed') {
+            return {
+              ok: false,
+              noticeCode: 'NETWORK_DISCONNECTED',
+              message: `Hosting hiện đang chạy bản web tĩnh (chưa bật Node.js app.js cho /api/auth/login — HTTP ${res?.status ?? 404}). Bạn có thể: (1) Bấm "Đăng nhập bằng Google" bên dưới để vào ngay, (2) Khởi chạy Node.js (app.js) trong cPanel → Setup Node.js App để dùng 66 tài khoản trường học, hoặc (3) Bật Email/Password trong Firebase Console (${firebaseConfig.projectId}) → Authentication → Sign-in method.`,
+            };
+          }
+        }
+      }
+
       return {
         ok: false,
         noticeCode: 'NETWORK_DISCONNECTED',
-        message: `Hosting hiện đang phục vụ bản web tĩnh (chưa chạy Node.js cho /api/auth/login — HTTP ${res.status}). Hãy bấm nút "Đăng nhập bằng Google" bên dưới để vào hệ thống ngay qua Firebase, hoặc khởi chạy ứng dụng Node.js (app.js) trên hosting.`,
+        message: `Hosting hiện đang phục vụ bản web tĩnh (chưa chạy Node.js cho /api/auth/login — HTTP ${res?.status ?? 404}). Hãy bấm nút "Đăng nhập bằng Google" bên dưới để vào hệ thống ngay qua Firebase, hoặc mở cPanel → Setup Node.js App và khởi chạy ứng dụng Node.js (Startup file: app.js) để đăng nhập bằng 66 tài khoản trường học.`,
       };
     }
 
@@ -298,7 +401,7 @@ export async function loginWithCredentials(params: {
       ok: false,
       noticeCode: 'NETWORK_DISCONNECTED',
       message:
-        'Không thể kết nối tới máy chủ Backend (/api/auth/login). Hãy bấm nút "Đăng nhập bằng Google" bên dưới để đăng nhập qua Firebase, hoặc kiểm tra ứng dụng Node.js trên hosting.',
+        'Không thể kết nối tới máy chủ Backend (/api/auth/login). Hãy bấm nút "Đăng nhập bằng Google" bên dưới để đăng nhập qua Firebase, hoặc kiểm tra ứng dụng Node.js (app.js) trên hosting.',
     };
   }
 }
